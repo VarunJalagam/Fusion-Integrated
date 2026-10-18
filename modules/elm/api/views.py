@@ -1,9 +1,13 @@
 from rest_framework import generics, permissions
-from modules.elm.models import LeaveType, LeaveBalance, LeaveApplication, SubstituteNominee
+
 from modules.elm.api.serializers import (
-    LeaveTypeSerializer, LeaveBalanceSerializer,
-    LeaveApplicationSerializer, SubstituteNomineeSerializer,
+    LeaveApplicationSerializer,
+    LeaveBalanceSerializer,
+    LeaveTypeSerializer,
+    SubstituteNomineeSerializer,
 )
+from modules.elm.models import LeaveApplication, LeaveBalance, LeaveType, SubstituteNominee
+
 
 class LeaveTypeListView(generics.ListAPIView):
     queryset = LeaveType.objects.all()
