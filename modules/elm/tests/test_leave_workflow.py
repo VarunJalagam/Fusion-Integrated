@@ -8,6 +8,8 @@ from modules.elm.services.leave_application_service import (
     create_leave_application,
     respond_to_substitute_request,
     nominate_replacement_substitute,
+    approve_leave_application,
+    unit_head_review,
 )
 
 
@@ -35,14 +37,21 @@ class TestLeaveWorkflow(TestCase):
             kind="staff",
             is_active=True
         )
+        self.unit_head = UserRef.objects.create(
+            user_id=2001,
+            username="unit_head",
+            display_name="Test Unit Head",
+            kind="staff",
+            is_active=True,
+        )
         
         self.leave_type = LeaveType.objects.create(code="CL", label="Casual Leave")
         self.leave_balance = LeaveBalance.objects.create(
             user=self.applicant, 
             leave_type=self.leave_type, 
-            balance=8.0
+            balance=8.0,
         )
-
+        
     def test_substitute_decline_and_replacement_workflow(self):
         # 1. Create Application
         application = create_leave_application(
@@ -98,3 +107,87 @@ class TestLeaveWorkflow(TestCase):
         self.assertTrue(response["success"])
         application.refresh_from_db()
         self.assertEqual(application.status, LeaveApplication.Status.AWAITING_UNIT_HEAD_REVIEW)
+
+    def test_balance_deduction_on_approval(self):
+        # Setup: Create application using create_leave_application with no substitute
+        application = create_leave_application(
+            user=self.applicant,
+            leave_type=self.leave_type,
+            start_date=date(2023, 10, 1),
+            end_date=date(2023, 10, 2),
+            is_half_day=False,
+            current_balance=8.0,
+            existing_leaves=[],
+            substitute_user_id=None,
+        )
+        self.assertEqual(application.status, LeaveApplication.Status.AWAITING_UNIT_HEAD_REVIEW)
+        self.assertEqual(SubstituteNominee.objects.filter(status=SubstituteNominee.NominationStatus.PENDING).count(), 0)
+        
+        # Refresh from DB to check balance (proves BR-EL-023: no deduction at creation)
+        self.leave_balance.refresh_from_db()
+        self.assertEqual(self.leave_balance.balance, 8.0)
+
+        # Call approve_leave_application(application.id, approver_user_id)
+        response = approve_leave_application(application.id, approver_user_id=1)
+        self.assertTrue(response["success"])
+        application.refresh_from_db()
+        self.assertEqual(application.status, LeaveApplication.Status.APPROVED)
+        self.assertEqual(application.final_decision, 'approved')
+        self.assertIsNotNone(application.final_decision_date)
+
+        # Assert: LeaveBalance is now 6.0 (2 days deducted for Oct 1-2)
+        self.leave_balance.refresh_from_db()
+        self.assertEqual(self.leave_balance.balance, 6.0)
+        
+    def test_unit_head_review_cl_approval(self):
+        """Test CL/RH approval path: Unit Head is final authority (BR-EL-016)."""
+        # Create application with no substitute -> goes to AWAITING_UNIT_HEAD_REVIEW
+        application = create_leave_application(
+            user=self.applicant,
+            leave_type=self.leave_type,
+            start_date=date(2023, 10, 1),
+            end_date=date(2023, 10, 2),
+            is_half_day=False,
+            current_balance=8.0,
+            existing_leaves=[],
+            substitute_user_id=None,
+        )
+        self.assertEqual(application.status, LeaveApplication.Status.AWAITING_UNIT_HEAD_REVIEW)
+
+        # Unit Head approves -> should become APPROVED
+        response = unit_head_review(
+            application_id=application.id,
+            unit_head_user_id=self.unit_head.user_id,
+            decision='approved',
+            recommendation='',
+        )
+        self.assertTrue(response['success'])
+
+        application.refresh_from_db()
+        self.assertEqual(application.status, LeaveApplication.Status.APPROVED)
+
+    def test_unit_head_review_cl_rejection(self):
+        """Test CL/RH rejection path: Unit Head can reject (BR-EL-016)."""
+        application = create_leave_application(
+            user=self.applicant,
+            leave_type=self.leave_type,
+            start_date=date(2023, 10, 1),
+            end_date=date(2023, 10, 2),
+            is_half_day=False,
+            current_balance=8.0,
+            existing_leaves=[],
+            substitute_user_id=None,
+        )
+        self.assertEqual(application.status, LeaveApplication.Status.AWAITING_UNIT_HEAD_REVIEW)
+
+        # Unit Head rejects -> should become REJECTED
+        response = unit_head_review(
+            application_id=application.id,
+            unit_head_user_id=self.unit_head.user_id,
+            decision='rejected',
+            recommendation='',
+        )
+        self.assertTrue(response['success'])
+
+        application.refresh_from_db()
+        self.assertEqual(application.status, LeaveApplication.Status.REJECTED)
