@@ -28,7 +28,7 @@ def create_leave_application(
     if not is_valid:
         raise ValueError(error_message)
 
-    if substitute_user_id is not None and substitute_user_id == user.id:
+    if substitute_user_id is not None and substitute_user_id == user.user_id:
         raise ValueError("Substitute cannot be the applicant")
 
     with transaction.atomic():

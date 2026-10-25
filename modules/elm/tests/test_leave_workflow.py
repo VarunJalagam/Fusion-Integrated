@@ -243,3 +243,89 @@ class TestLeaveWorkflow(TestCase):
                 substitute_user_id=self.applicant.user_id,  # Applicant as substitute
             )
         self.assertIn('Substitute cannot be the applicant', str(context.exception))
+        
+    def test_cannot_respond_to_already_responded_nomination(self):
+        """Test that a nominee cannot respond twice to the same nomination."""
+        # Create application with substitute
+        application = create_leave_application(
+            user=self.applicant,
+            leave_type=self.leave_type,
+            start_date=date(2023, 10, 1),
+            end_date=date(2023, 10, 2),
+            is_half_day=False,
+            current_balance=8.0,
+            existing_leaves=[],
+            substitute_user_id=self.substitute.user_id,
+        )
+        
+        # First response (accept)
+        nominee = application.substitutenominee_set.first()
+        response1 = respond_to_substitute_request(
+            nominee_id=nominee.id,
+            user_id=self.substitute.user_id,
+            response='accepted',
+        )
+        self.assertTrue(response1['success'])
+        
+        # Second response (should fail - already responded)
+        response2 = respond_to_substitute_request(
+            nominee_id=nominee.id,
+            user_id=self.substitute.user_id,
+            response='declined',
+        )
+        self.assertFalse(response2['success'])
+        self.assertIn('not pending', response2['message'])
+
+    def test_cannot_nominate_replacement_in_wrong_state(self):
+        """Test that replacement nomination only works in APPLICANT_ACTION_REQUIRED state."""
+        # Create application with no substitute -> goes to AWAITING_UNIT_HEAD_REVIEW
+        application = create_leave_application(
+            user=self.applicant,
+            leave_type=self.leave_type,
+            start_date=date(2023, 10, 1),
+            end_date=date(2023, 10, 2),
+            is_half_day=False,
+            current_balance=8.0,
+            existing_leaves=[],
+            substitute_user_id=None,
+        )
+        
+        # Try to nominate replacement (should fail - wrong state)
+        response = nominate_replacement_substitute(
+            application_id=application.id,
+            applicant_user_id=self.applicant.user_id,
+            new_substitute_user_id=self.new_substitute.user_id,
+        )
+        self.assertFalse(response['success'])
+        self.assertIn('correct state', response['message'])
+
+    def test_only_applicant_can_nominate_replacement(self):
+        """Test that only the applicant can nominate a replacement substitute."""
+        # Create application with substitute
+        application = create_leave_application(
+            user=self.applicant,
+            leave_type=self.leave_type,
+            start_date=date(2023, 10, 1),
+            end_date=date(2023, 10, 2),
+            is_half_day=False,
+            current_balance=8.0,
+            existing_leaves=[],
+            substitute_user_id=self.substitute.user_id,
+        )
+        
+        # Substitute declines
+        nominee = application.substitutenominee_set.first()
+        respond_to_substitute_request(
+            nominee_id=nominee.id,
+            user_id=self.substitute.user_id,
+            response='declined',
+        )
+        
+        # Try to nominate replacement as someone other than applicant (should fail)
+        response = nominate_replacement_substitute(
+            application_id=application.id,
+            applicant_user_id=self.substitute.user_id,  # Wrong user
+            new_substitute_user_id=self.new_substitute.user_id,
+        )
+        self.assertFalse(response['success'])
+        self.assertIn('Only the applicant', response['message'])
