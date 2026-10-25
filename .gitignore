@@ -48,3 +48,4 @@ docs/module-structure.html
 .vscode/
 *.swp
 .aider*
+elm_specs/
