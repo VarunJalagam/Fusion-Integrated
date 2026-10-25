@@ -228,3 +228,18 @@ class TestLeaveWorkflow(TestCase):
         # Final decision should NOT be set yet (that's the Sanctioning Authority's job)
         self.assertEqual(application.final_decision, '')
         self.assertIsNone(application.final_decision_date)
+        
+    def test_substitute_cannot_be_applicant(self):
+        """Test BR-EL-014: Substitute must not be the applicant."""
+        with self.assertRaises(ValueError) as context:
+            create_leave_application(
+                user=self.applicant,
+                leave_type=self.leave_type,
+                start_date=date(2023, 10, 1),
+                end_date=date(2023, 10, 2),
+                is_half_day=False,
+                current_balance=8.0,
+                existing_leaves=[],
+                substitute_user_id=self.applicant.user_id,  # Applicant as substitute
+            )
+        self.assertIn('Substitute cannot be the applicant', str(context.exception))
