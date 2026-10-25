@@ -191,3 +191,40 @@ class TestLeaveWorkflow(TestCase):
 
         application.refresh_from_db()
         self.assertEqual(application.status, LeaveApplication.Status.REJECTED)
+        
+    def test_unit_head_review_higher_sanction_recommendation(self):
+        """Test higher-sanction path: Unit Head records recommendation, not final decision (BR-EL-017)."""
+        # Create an EL (Earned Leave) type - higher-sanction leave
+        el_type = LeaveType.objects.create(code="EL", label="Earned Leave")
+        LeaveBalance.objects.create(user=self.applicant, leave_type=el_type, balance=30.0)
+
+        # Create application with no substitute -> goes to AWAITING_UNIT_HEAD_REVIEW
+        application = create_leave_application(
+            user=self.applicant,
+            leave_type=el_type,
+            start_date=date(2023, 10, 1),
+            end_date=date(2023, 10, 5),
+            is_half_day=False,
+            current_balance=30.0,
+            existing_leaves=[],
+            substitute_user_id=None,
+        )
+        self.assertEqual(application.status, LeaveApplication.Status.AWAITING_UNIT_HEAD_REVIEW)
+
+        # Unit Head records recommendation (not final decision)
+        response = unit_head_review(
+            application_id=application.id,
+            unit_head_user_id=self.unit_head.user_id,
+            decision='recommended',
+            recommendation='Recommended',
+        )
+        self.assertTrue(response['success'])
+
+        application.refresh_from_db()
+        # Should route to awaiting final sanction, NOT approved
+        self.assertEqual(application.status, LeaveApplication.Status.AWAITING_FINAL_SANCTION_DECISION)
+        # Recommendation should be recorded
+        self.assertEqual(application.unit_head_recommendation, 'Recommended')
+        # Final decision should NOT be set yet (that's the Sanctioning Authority's job)
+        self.assertEqual(application.final_decision, '')
+        self.assertIsNone(application.final_decision_date)
