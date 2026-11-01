@@ -19,17 +19,17 @@ class LeaveType(TimeStampedModel):
 
 class LeaveBalance(TimeStampedModel):
     """Represents the balance of leaves for a user."""
-    user = models.ForeignKey('directory.UserRef', on_delete=models.CASCADE)
+    user_id = models.IntegerField()
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     balance = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
         db_table = "elm_leave_balance"
-        unique_together = ("user", "leave_type")
-        ordering = ["user", "leave_type"]
+        unique_together = ("user_id", "leave_type")
+        ordering = ["user_id", "leave_type"]
 
     def __str__(self) -> str:
-        return f"{self.user} - {self.leave_type}"
+        return f"{self.user_id} - {self.leave_type}"
 
 
 class LeaveApplication(TimeStampedModel):
@@ -50,8 +50,16 @@ class LeaveApplication(TimeStampedModel):
             'awaiting_final_sanction_decision',
             'Awaiting Final Sanction Decision'
         )
+        CANCELLATION_PENDING_UH_REVIEW = (
+            'cancellation_pending_uh_review',
+            'Cancellation Pending Unit Head Review'
+        )
+        CANCELLATION_PENDING_FINAL_DECISION = (
+            'cancellation_pending_final_decision',
+            'Cancellation Pending Final Decision'
+        )
 
-    user = models.ForeignKey('directory.UserRef', on_delete=models.CASCADE)
+    user_id = models.IntegerField()
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     start_date = models.DateField()
     end_date = models.DateField()
@@ -65,13 +73,14 @@ class LeaveApplication(TimeStampedModel):
     unit_head_recommendation = models.CharField(max_length=50, blank=True)
     final_decision = models.CharField(max_length=20, blank=True)
     final_decision_date = models.DateTimeField(null=True, blank=True)
+    is_half_day = models.BooleanField(default=False)
 
     class Meta:
         db_table = "elm_leave_application"
-        ordering = ["user", "start_date"]
+        ordering = ["user_id", "start_date"]
 
     def __str__(self) -> str:
-        return f"{self.user} - {self.leave_type} - {self.start_date} to {self.end_date}"
+        return f"{self.user_id} - {self.leave_type} - {self.start_date} to {self.end_date}"
 
 
 class SubstituteNominee(TimeStampedModel):
@@ -82,7 +91,7 @@ class SubstituteNominee(TimeStampedModel):
         DECLINED = 'declined', 'Declined'
 
     leave_application = models.ForeignKey(LeaveApplication, on_delete=models.CASCADE)
-    user = models.ForeignKey('directory.UserRef', on_delete=models.CASCADE)
+    user_id = models.IntegerField()
     status = models.CharField(
         max_length=20,
         choices=NominationStatus.choices,
@@ -91,8 +100,8 @@ class SubstituteNominee(TimeStampedModel):
 
     class Meta:
         db_table = "elm_substitute_nominee"
-        unique_together = ("leave_application", "user")
-        ordering = ["leave_application", "user"]
+        unique_together = ("leave_application", "user_id")
+        ordering = ["leave_application", "user_id"]
 
     def __str__(self) -> str:
-        return f"{self.leave_application} - {self.user}"
+        return f"{self.leave_application} - {self.user_id}"

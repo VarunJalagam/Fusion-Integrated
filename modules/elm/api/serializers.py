@@ -22,3 +22,6 @@ class SubstituteNomineeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubstituteNominee
         fields = '__all__'
+
+class CancellationDecisionRequestSerializer(serializers.Serializer):
+    decision = serializers.ChoiceField(choices=["approved", "rejected"])

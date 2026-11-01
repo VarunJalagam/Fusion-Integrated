@@ -53,3 +53,32 @@ def validate_leave_request(
         return False, "Overlap with existing leave"
 
     return True, ""
+
+
+def validate_substitute_eligibility(
+        substitute_existing_leaves: list[dict],
+        start_date: date,
+        end_date: date
+    ) -> tuple[bool, str]:
+    for leave in substitute_existing_leaves:
+        if leave['status'] in [
+            'pending',
+            'approved',
+            'awaiting_substitute_response',
+            'awaiting_unit_head_review',
+            'awaiting_final_sanction_decision'
+        ]:
+            existing_start = leave['start_date']
+            existing_end = leave['end_date']
+
+            # Check if date ranges overlap
+            ranges_overlap = (start_date <= existing_end and end_date >= existing_start)
+
+            if ranges_overlap:
+                return (
+                    False,
+                    "Substitute has overlapping pending or approved leave during this period"
+                )
+
+
+    return True, ""

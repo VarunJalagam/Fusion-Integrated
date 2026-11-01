@@ -3,12 +3,12 @@ from datetime import date
 from django.test import TestCase
 
 from modules.directory.models import UserRef
-from modules.elm.models import LeaveApplication, LeaveType, LeaveBalance, SubstituteNominee
+from modules.elm.models import LeaveApplication, LeaveBalance, LeaveType, SubstituteNominee
 from modules.elm.services.leave_application_service import (
-    create_leave_application,
-    respond_to_substitute_request,
-    nominate_replacement_substitute,
     approve_leave_application,
+    create_leave_application,
+    nominate_replacement_substitute,
+    respond_to_substitute_request,
     unit_head_review,
 )
 
@@ -44,14 +44,14 @@ class TestLeaveWorkflow(TestCase):
             kind="staff",
             is_active=True,
         )
-        
+
         self.leave_type = LeaveType.objects.create(code="CL", label="Casual Leave")
         self.leave_balance = LeaveBalance.objects.create(
-            user=self.applicant, 
-            leave_type=self.leave_type, 
+            user_id=self.applicant.user_id,
+            leave_type=self.leave_type,
             balance=8.0,
         )
-        
+
     def test_substitute_decline_and_replacement_workflow(self):
         # 1. Create Application
         application = create_leave_application(
@@ -66,7 +66,7 @@ class TestLeaveWorkflow(TestCase):
         )
         self.assertEqual(application.status, LeaveApplication.Status.AWAITING_SUBSTITUTE_RESPONSE)
         self.assertEqual(SubstituteNominee.objects.filter(status=SubstituteNominee.NominationStatus.PENDING).count(), 1)
-        
+
         # Refresh from DB to check balance (proves BR-EL-023: no deduction at creation)
         self.leave_balance.refresh_from_db()
         self.assertEqual(self.leave_balance.balance, 8.0)
@@ -122,7 +122,7 @@ class TestLeaveWorkflow(TestCase):
         )
         self.assertEqual(application.status, LeaveApplication.Status.AWAITING_UNIT_HEAD_REVIEW)
         self.assertEqual(SubstituteNominee.objects.filter(status=SubstituteNominee.NominationStatus.PENDING).count(), 0)
-        
+
         # Refresh from DB to check balance (proves BR-EL-023: no deduction at creation)
         self.leave_balance.refresh_from_db()
         self.assertEqual(self.leave_balance.balance, 8.0)
@@ -138,7 +138,7 @@ class TestLeaveWorkflow(TestCase):
         # Assert: LeaveBalance is now 6.0 (2 days deducted for Oct 1-2)
         self.leave_balance.refresh_from_db()
         self.assertEqual(self.leave_balance.balance, 6.0)
-        
+
     def test_unit_head_review_cl_approval(self):
         """Test CL/RH approval path: Unit Head is final authority (BR-EL-016)."""
         # Create application with no substitute -> goes to AWAITING_UNIT_HEAD_REVIEW
@@ -191,12 +191,12 @@ class TestLeaveWorkflow(TestCase):
 
         application.refresh_from_db()
         self.assertEqual(application.status, LeaveApplication.Status.REJECTED)
-        
+
     def test_unit_head_review_higher_sanction_recommendation(self):
         """Test higher-sanction path: Unit Head records recommendation, not final decision (BR-EL-017)."""
         # Create an EL (Earned Leave) type - higher-sanction leave
         el_type = LeaveType.objects.create(code="EL", label="Earned Leave")
-        LeaveBalance.objects.create(user=self.applicant, leave_type=el_type, balance=30.0)
+        LeaveBalance.objects.create(user_id=self.applicant.user_id, leave_type=el_type, balance=30.0)
 
         # Create application with no substitute -> goes to AWAITING_UNIT_HEAD_REVIEW
         application = create_leave_application(
@@ -228,7 +228,7 @@ class TestLeaveWorkflow(TestCase):
         # Final decision should NOT be set yet (that's the Sanctioning Authority's job)
         self.assertEqual(application.final_decision, '')
         self.assertIsNone(application.final_decision_date)
-        
+
     def test_substitute_cannot_be_applicant(self):
         """Test BR-EL-014: Substitute must not be the applicant."""
         with self.assertRaises(ValueError) as context:
@@ -243,7 +243,7 @@ class TestLeaveWorkflow(TestCase):
                 substitute_user_id=self.applicant.user_id,  # Applicant as substitute
             )
         self.assertIn('Substitute cannot be the applicant', str(context.exception))
-        
+
     def test_cannot_respond_to_already_responded_nomination(self):
         """Test that a nominee cannot respond twice to the same nomination."""
         # Create application with substitute
@@ -257,7 +257,7 @@ class TestLeaveWorkflow(TestCase):
             existing_leaves=[],
             substitute_user_id=self.substitute.user_id,
         )
-        
+
         # First response (accept)
         nominee = application.substitutenominee_set.first()
         response1 = respond_to_substitute_request(
@@ -266,7 +266,7 @@ class TestLeaveWorkflow(TestCase):
             response='accepted',
         )
         self.assertTrue(response1['success'])
-        
+
         # Second response (should fail - already responded)
         response2 = respond_to_substitute_request(
             nominee_id=nominee.id,
@@ -289,7 +289,7 @@ class TestLeaveWorkflow(TestCase):
             existing_leaves=[],
             substitute_user_id=None,
         )
-        
+
         # Try to nominate replacement (should fail - wrong state)
         response = nominate_replacement_substitute(
             application_id=application.id,
@@ -312,7 +312,7 @@ class TestLeaveWorkflow(TestCase):
             existing_leaves=[],
             substitute_user_id=self.substitute.user_id,
         )
-        
+
         # Substitute declines
         nominee = application.substitutenominee_set.first()
         respond_to_substitute_request(
@@ -320,7 +320,7 @@ class TestLeaveWorkflow(TestCase):
             user_id=self.substitute.user_id,
             response='declined',
         )
-        
+
         # Try to nominate replacement as someone other than applicant (should fail)
         response = nominate_replacement_substitute(
             application_id=application.id,

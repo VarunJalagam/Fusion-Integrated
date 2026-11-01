@@ -33,7 +33,7 @@ def create_leave_application(
 
     with transaction.atomic():
         application = LeaveApplication.objects.create(
-            user=user,
+            user_id=user.user_id,
             leave_type=leave_type,
             start_date=start_date,
             end_date=end_date,
@@ -145,7 +145,7 @@ def approve_leave_application(
             )
 
             user_leave_balance = LeaveBalance.objects.get(
-                user=application.user,
+                user_id=application.user_id,
                 leave_type=application.leave_type
             )
             user_leave_balance.balance -= requested
@@ -200,3 +200,84 @@ def nominate_replacement_substitute(
 
     except LeaveApplication.DoesNotExist:
         return {"success": False, "message": "Application not found"}
+
+
+def withdraw_pending_request(application_id: int, user_id: int) -> dict:
+    try:
+        with transaction.atomic():
+            application = LeaveApplication.objects.get(id=application_id)
+            if application.user_id != user_id:
+                return {"success": False, "message": "Invalid user for this request"}
+            if application.status not in [
+                LeaveApplication.Status.DRAFT,
+                LeaveApplication.Status.AWAITING_SUBSTITUTE_RESPONSE,
+                LeaveApplication.Status.APPLICANT_ACTION_REQUIRED,
+                LeaveApplication.Status.AWAITING_UNIT_HEAD_REVIEW,
+                LeaveApplication.Status.AWAITING_FINAL_SANCTION_DECISION,
+            ]:
+                return {
+                    "success": False,
+                    "message": "Application is not in a state to be withdrawn"
+                }
+            application.status = LeaveApplication.Status.WITHDRAWN
+            application.save()
+            return {"success": True, "message": "Application withdrawn successfully"}
+    except LeaveApplication.DoesNotExist:
+        return {"success": False, "message": "Application not found"}
+
+
+def request_leave_cancellation(application_id: int, user_id: int) -> dict:
+    try:
+        with transaction.atomic():
+            application = LeaveApplication.objects.get(id=application_id)
+            if application.user_id != user_id:
+                return {"success": False, "message": "Invalid user for this request"}
+            if application.status != LeaveApplication.Status.APPROVED:
+                return {"success": False, "message": "Application is not approved"}
+            if application.start_date <= timezone.now().date():
+                return {"success": False, "message": "Cannot cancel past leave"}
+            application.status = LeaveApplication.Status.CANCELLATION_PENDING_UH_REVIEW
+            application.save()
+            return {"success": True, "message": "Cancellation request submitted successfully"}
+    except LeaveApplication.DoesNotExist:
+        return {"success": False, "message": "Application not found"}
+
+
+def process_cancellation_decision(
+        application_id: int,
+        approver_user_id: int,
+        decision: str
+    ) -> dict:
+    try:
+        with transaction.atomic():
+            application = LeaveApplication.objects.get(id=application_id)
+            if application.status not in [
+                LeaveApplication.Status.CANCELLATION_PENDING_UH_REVIEW,
+                LeaveApplication.Status.CANCELLATION_PENDING_FINAL_DECISION,
+            ]:
+                return {
+                    "success": False,
+                    "message": "Application is not in a state to be processed for cancellation"
+                }
+            if decision == 'approved':
+                application.status = LeaveApplication.Status.CANCELLED
+                requested = (
+                    0.5 if getattr(application, 'is_half_day', False)
+                    else (application.end_date - application.start_date).days + 1
+                )
+                user_leave_balance = LeaveBalance.objects.get(
+                    user=application.user_id,
+                    leave_type=application.leave_type
+                )
+                user_leave_balance.balance += requested
+                user_leave_balance.save()
+            elif decision == 'rejected':
+                application.status = LeaveApplication.Status.APPROVED
+            else:
+                return {"success": False, "message": "Invalid decision"}
+            application.save()
+            return {"success": True, "message": "Cancellation decision processed successfully"}
+    except LeaveApplication.DoesNotExist:
+        return {"success": False, "message": "Application not found"}
+    except LeaveBalance.DoesNotExist:
+        return {"success": False, "message": "Leave balance not found"}

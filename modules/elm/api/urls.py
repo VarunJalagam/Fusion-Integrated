@@ -4,7 +4,10 @@ from modules.elm.api.views import (
     LeaveApplicationListView,
     LeaveBalanceListView,
     LeaveTypeListView,
+    ProcessCancellationDecisionAPIView,
+    RequestLeaveCancellationAPIView,
     SubstituteNomineeListView,
+    WithdrawLeaveAPIView,
 )
 
 urlpatterns = [
@@ -15,5 +18,20 @@ urlpatterns = [
         'substitute-nominees/',
         SubstituteNomineeListView.as_view(),
         name='substitute-nominee-list'
+    ),
+    path(
+        'leave/<int:application_id>/withdraw/',
+        WithdrawLeaveAPIView.as_view(),
+        name='leave-withdraw'
+    ),
+    path(
+        'leave/<int:application_id>/cancel/',
+        RequestLeaveCancellationAPIView.as_view(),
+        name='leave-cancel'
+    ),
+    path(
+        'leave/<int:application_id>/cancel/decision/',
+        ProcessCancellationDecisionAPIView.as_view(),
+        name='leave-cancel-decision'
     ),
 ]
