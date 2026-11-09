@@ -309,15 +309,44 @@ def test_tc_fts_009_return_file_to_previous_sender(stub_iam):
     Purpose: Verify returning an active circulated file to the previous sender.
     Preconditions: User has received an active circulated file. Previous sender is known.
     Action/Input: Return file to previous sender with mandatory movement comment.
-    Expected Result: File held by previous sender. History records return action.
-                     Return notification triggered.
+    Expected Result: File held by previous sender. History records return action. Return
+                     notification triggered.
     Test Type: Positive
     """
-    pytest.skip(
-        "NOT_AUTOMATED: return_file workflow cannot be executed due to production bugs in "
-        "return_file_service (type mismatch in holder check and unhandled UUID JSON serialization "
-        "in FtsAuditLog details)."
+    from modules.fts.services.file_movement import return_file_service
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+    file_obj = create_file_service(str(user_a_id), "WF return workflow test")
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "WF forward")
+
+    # User B returns file to User A
+    return_file_service(
+        actor_id=str(user_b_id),
+        file_id=str(file_obj.id),
+        movement_comment="WF-009 returning to previous sender",
     )
+
+    file_obj.refresh_from_db()
+    assert file_obj.current_holder_id == user_a_id
+    assert file_obj.status == "CIRCULATED"
+
+    # History records return action
+    movements = list(
+        FtsFileMovement.objects.filter(file_id=file_obj.id).order_by("created_at")
+    )
+    assert len(movements) == 2
+    assert movements[1].sender_id == user_b_id
+    assert movements[1].receiver_id == user_a_id
+    assert movements[1].movement_type == "RETURN"
+    assert movements[1].comment == "WF-009 returning to previous sender"
+
+    # Audit log records RETURN
+    audit = FtsAuditLog.objects.filter(
+        file_id=str(file_obj.id), action="RETURN"
+    ).first()
+    assert audit is not None
+    assert audit.actor_id == user_b_id
 
 
 def test_tc_fts_010_archival_of_completed_circulated_file(stub_iam):

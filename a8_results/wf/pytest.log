@@ -1,4 +1,133 @@
-........s......                                                          [100%]
+........F......                                                          [100%]
+=================================== FAILURES ===================================
+________________ test_tc_fts_009_return_file_to_previous_sender ________________
+
+stub_iam = <function stub_iam.<locals>._install at 0x77c3cb6b7600>
+
+    def test_tc_fts_009_return_file_to_previous_sender(stub_iam):
+        """
+        Test ID: TC-FTS-009
+        Source ID: BW-FTS-03, FTS-UC-004, BR-FTS-006, BR-FTS-013
+        Purpose: Verify returning an active circulated file to the previous sender.
+        Preconditions: User has received an active circulated file. Previous sender is known.
+        Action/Input: Return file to previous sender with mandatory movement comment.
+        Expected Result: File held by previous sender. History records return action. Return
+                         notification triggered.
+        Test Type: Positive
+        """
+        from modules.fts.services.file_movement import return_file_service
+    
+        _, user_a_id = _get_auth_client(stub_iam)
+        user_b_id = uuid.uuid4()
+        file_obj = create_file_service(str(user_a_id), "WF return workflow test")
+        forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "WF forward")
+    
+        # User B returns file to User A
+>       return_file_service(
+            actor_id=str(user_b_id),
+            file_id=str(file_obj.id),
+            movement_comment="WF-009 returning to previous sender",
+        )
+
+tests/a8/wf/test_wf_workflows.py:324: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/fts/services/file_movement.py:148: in return_file_service
+    FtsAuditLog.objects.create(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:665: in create
+    obj.save(force_insert=True, using=self.db)
+.venv/lib/python3.12/site-packages/django/db/models/base.py:902: in save
+    self.save_base(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1008: in save_base
+    updated = self._save_table(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1169: in _save_table
+    results = self._do_insert(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1210: in _do_insert
+    return manager._insert(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1873: in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py:1882: in execute_sql
+    cursor.execute(sql, params)
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:79: in execute
+    return self._execute_with_wrappers(
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:92: in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:105: in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/cursor.py:113: in execute
+    self._conn.wait(
+.venv/lib/python3.12/site-packages/psycopg/connection.py:495: in wait
+    return waiting.wait(
+psycopg_binary/_psycopg/waiting.pyx:227: in psycopg_binary._psycopg.wait_c
+    ???
+.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py:205: in _execute_gen
+    pgq = self._convert_query(query, params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py:465: in _convert_query
+    pgq.convert(query, params)
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:289: in convert
+    self.dump(vars)
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:299: in dump
+    self.params = tuple(
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:300: in <genexpr>
+    self._tx.as_literal(p) if p is not None else b"NULL" for p in params
+    ^^^^^^^^^^^^^^^^^^^^^^
+psycopg_binary/_psycopg/transform.pyx:205: in psycopg_binary._psycopg.Transformer.as_literal
+    ???
+psycopg_binary/_psycopg/transform.pyx:214: in psycopg_binary._psycopg.Transformer.as_literal
+    ???
+.venv/lib/python3.12/site-packages/psycopg/adapt.py:59: in quote
+    if (value := self.dump(obj)) is None:
+                 ^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/types/json.py:218: in dump
+    if isinstance((data := dumps(obj)), str):
+                           ^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/__init__.py:231: in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:200: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:258: in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.encoder.JSONEncoder object at 0x77c3d0c465d0>
+o = UUID('938c5e9d-6f1e-4e42-a187-591f9a6403a1')
+
+    def default(self, o):
+        """Implement this method in a subclass such that it returns
+        a serializable object for ``o``, or calls the base implementation
+        (to raise a ``TypeError``).
+    
+        For example, to support arbitrary iterators, you could
+        implement default like this::
+    
+            def default(self, o):
+                try:
+                    iterable = iter(o)
+                except TypeError:
+                    pass
+                else:
+                    return list(iterable)
+                # Let the base class default method raise the TypeError
+                return super().default(o)
+    
+        """
+>       raise TypeError(f'Object of type {o.__class__.__name__} '
+                        f'is not JSON serializable')
+E       TypeError: Object of type UUID is not JSON serializable
+
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:180: TypeError
 ================================ tests coverage ================================
 _______________ coverage: platform linux, python 3.12.8-final-0 ________________
 
@@ -8,7 +137,7 @@ modules/fts/api/serializers.py                                               107
 modules/fts/api/urls.py                                                        4      0      0      0   100%
 modules/fts/api/views.py                                                      78     17     10      1    75%   47-54, 112-128, 141
 modules/fts/apps.py                                                            4      0      0      0   100%
-modules/fts/domain/commands.py                                                43     11     22      5    69%   14, 39, 69, 91-99, 113, 115
+modules/fts/domain/commands.py                                                43      7     22      7    78%   14, 39, 69, 92, 95, 113, 115
 modules/fts/domain/states.py                                                   6      0      0      0   100%
 modules/fts/migrations/0001_initial.py                                         6      0      0      0   100%
 modules/fts/migrations/0002_ftsfilemovement_ftsfile_current_holder_id.py       5      0      0      0   100%
@@ -16,8 +145,10 @@ modules/fts/migrations/__init__.py                                             0
 modules/fts/models.py                                                         47      5      0      0    89%   24, 36, 47, 59, 77
 modules/fts/services/file_archival.py                                         17      2      2      0    89%   11-12
 modules/fts/services/file_creation.py                                         43      8     12      3    76%   38-39, 65-66, 69, 109-110, 113
-modules/fts/services/file_movement.py                                         48     27     22      4    36%   23, 26-27, 30, 64-65, 90-156
+modules/fts/services/file_movement.py                                         48     12     22      8    63%   23, 26-27, 30, 64-65, 92, 95, 98, 140-141, 156
 ----------------------------------------------------------------------------------------------------------------------
-TOTAL                                                                        408     96     76     15    71%
+TOTAL                                                                        408     77     76     21    76%
 Coverage XML written to file a8_results/wf/coverage.xml
-14 passed, 1 skipped in 3.06s
+=========================== short test summary info ============================
+FAILED tests/a8/wf/test_wf_workflows.py::test_tc_fts_009_return_file_to_previous_sender
+1 failed, 14 passed in 3.53s

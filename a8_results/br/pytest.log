@@ -1,4 +1,442 @@
-s.....sss...ss                                                           [100%]
+s.....FFF...ss                                                           [100%]
+=================================== FAILURES ===================================
+____________________ test_tc_br007_01_return_file_to_sender ____________________
+
+stub_iam = <function stub_iam.<locals>._install at 0x7307226a4f40>
+
+    def test_tc_br007_01_return_file_to_sender(stub_iam):
+        """
+        Test ID: TC-BR007-01
+        Source ID: BR-FTS-007
+        Purpose: Verify that a file can be returned to the sender by the current holder.
+        Preconditions: User A forwarded File F to User B. User B has received File F.
+        Action/Input: User B selects 'Return' on File F with a mandatory comment.
+        Expected Result: File F is returned to User A's Inbox. A movement record is created
+                         indicating return from User B to User A.
+        Test Type: Eligibility/Routing
+        """
+        from modules.fts.services.file_movement import return_file_service
+    
+        _, user_a_id = _get_auth_client(stub_iam)
+        user_b_id = uuid.uuid4()
+        file_obj = create_file_service(str(user_a_id), "BR-007 return test")
+        forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "BR-007 forward")
+    
+        # User B returns the file to User A
+>       return_file_service(
+            actor_id=str(user_b_id),
+            file_id=str(file_obj.id),
+            movement_comment="BR-007 returning to sender",
+        )
+
+tests/a8/br/test_br_business_rules.py:260: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/fts/services/file_movement.py:148: in return_file_service
+    FtsAuditLog.objects.create(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:665: in create
+    obj.save(force_insert=True, using=self.db)
+.venv/lib/python3.12/site-packages/django/db/models/base.py:902: in save
+    self.save_base(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1008: in save_base
+    updated = self._save_table(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1169: in _save_table
+    results = self._do_insert(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1210: in _do_insert
+    return manager._insert(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1873: in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py:1882: in execute_sql
+    cursor.execute(sql, params)
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:79: in execute
+    return self._execute_with_wrappers(
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:92: in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:105: in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/cursor.py:113: in execute
+    self._conn.wait(
+.venv/lib/python3.12/site-packages/psycopg/connection.py:495: in wait
+    return waiting.wait(
+psycopg_binary/_psycopg/waiting.pyx:227: in psycopg_binary._psycopg.wait_c
+    ???
+.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py:205: in _execute_gen
+    pgq = self._convert_query(query, params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py:465: in _convert_query
+    pgq.convert(query, params)
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:289: in convert
+    self.dump(vars)
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:299: in dump
+    self.params = tuple(
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:300: in <genexpr>
+    self._tx.as_literal(p) if p is not None else b"NULL" for p in params
+    ^^^^^^^^^^^^^^^^^^^^^^
+psycopg_binary/_psycopg/transform.pyx:205: in psycopg_binary._psycopg.Transformer.as_literal
+    ???
+psycopg_binary/_psycopg/transform.pyx:214: in psycopg_binary._psycopg.Transformer.as_literal
+    ???
+.venv/lib/python3.12/site-packages/psycopg/adapt.py:59: in quote
+    if (value := self.dump(obj)) is None:
+                 ^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/types/json.py:218: in dump
+    if isinstance((data := dumps(obj)), str):
+                           ^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/__init__.py:231: in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:200: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:258: in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.encoder.JSONEncoder object at 0x730727caa6c0>
+o = UUID('5ef02f70-f471-4470-9df0-55b54ed9071d')
+
+    def default(self, o):
+        """Implement this method in a subclass such that it returns
+        a serializable object for ``o``, or calls the base implementation
+        (to raise a ``TypeError``).
+    
+        For example, to support arbitrary iterators, you could
+        implement default like this::
+    
+            def default(self, o):
+                try:
+                    iterable = iter(o)
+                except TypeError:
+                    pass
+                else:
+                    return list(iterable)
+                # Let the base class default method raise the TypeError
+                return super().default(o)
+    
+        """
+>       raise TypeError(f'Object of type {o.__class__.__name__} '
+                        f'is not JSON serializable')
+E       TypeError: Object of type UUID is not JSON serializable
+
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:180: TypeError
+_________ test_tc_br008_01_forwarding_events_recorded_chronologically __________
+
+stub_iam = <function stub_iam.<locals>._install at 0x7307230947c0>
+
+    def test_tc_br008_01_forwarding_events_recorded_chronologically(stub_iam):
+        """
+        Test ID: TC-BR008-01
+        Source ID: BR-FTS-008
+        Purpose: Verify that forwarding events are recorded chronologically with all required details.
+        Preconditions: File F exists. User A forwards File F to User B with Comment C and
+                       Attachment Att.
+        Action/Input: View the movement history of File F.
+        Expected Result: History contains a record with Sender=User A, Receiver=User B,
+                         Timestamp=Now, Comment=C, Attachment=Att. Records are ordered chronologically.
+        Test Type: Audit/Record Constraint
+        """
+        from modules.fts.selectors.file_queries import get_file_history
+    
+        _, user_a_id = _get_auth_client(stub_iam)
+        user_b_id = uuid.uuid4()
+    
+        file_obj = create_file_service(
+            actor_id=str(user_a_id),
+            initial_comment="BR-008 initial",
+            attachment_urls=["https://documents.fusion.edu/br008.pdf"],
+        )
+        forward_file_service(
+            actor_id=str(user_a_id),
+            file_id=str(file_obj.id),
+            receiver_id=str(user_b_id),
+            movement_comment="BR-008 forward comment",
+        )
+    
+        # View movement history
+>       history = get_file_history(actor_id=str(user_a_id), file_id=str(file_obj.id))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/a8/br/test_br_business_rules.py:310: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/fts/selectors/file_queries.py:43: in get_file_history
+    get_file_detail(actor_id, file_id)  # Verify user is authorized to view the file
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+modules/fts/selectors/file_queries.py:21: in get_file_detail
+    file = FtsFile.objects.filter(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1495: in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1513: in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1523: in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1648: in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1680: in _add_q
+    child_clause, needed_inner = self.build_filter(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1505: in build_filter
+    return self._add_q(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1680: in _add_q
+    child_clause, needed_inner = self.build_filter(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1505: in build_filter
+    return self._add_q(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1680: in _add_q
+    child_clause, needed_inner = self.build_filter(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1528: in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1335: in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.db.models.sql.query.Query object at 0x730722c24680>
+names = ['ftsfilemovement', 'sender_id'], opts = <Options for FtsFile>
+allow_many = True, fail_on_missing = False
+
+    def names_to_path(self, names, opts, allow_many=True, fail_on_missing=False):
+        """
+        Walk the list of names and turns them into PathInfo tuples. A single
+        name in 'names' can generate multiple PathInfos (m2m, for example).
+    
+        'names' is the path of names to travel, 'opts' is the model Options we
+        start the name resolving from, 'allow_many' is as for setup_joins().
+        If fail_on_missing is set to True, then a name that can't be resolved
+        will generate a FieldError.
+    
+        Return a list of PathInfo tuples. In addition return the final field
+        (the last used join field) and target (which is a field guaranteed to
+        contain the same value as the final field). Finally, return those names
+        that weren't found (which are likely transforms and the final lookup).
+        """
+        path, names_with_path = [], []
+        for pos, name in enumerate(names):
+            cur_names_with_path = (name, [])
+            if name == "pk" and opts is not None:
+                name = opts.pk.name
+    
+            field = None
+            filtered_relation = None
+            try:
+                if opts is None:
+                    raise FieldDoesNotExist
+                field = opts.get_field(name)
+            except FieldDoesNotExist:
+                if name in self.annotation_select:
+                    field = self.annotation_select[name].output_field
+                elif name in self._filtered_relations and pos == 0:
+                    filtered_relation = self._filtered_relations[name]
+                    if LOOKUP_SEP in filtered_relation.relation_name:
+                        parts = filtered_relation.relation_name.split(LOOKUP_SEP)
+                        filtered_relation_path, field, _, _ = self.names_to_path(
+                            parts,
+                            opts,
+                            allow_many,
+                            fail_on_missing,
+                        )
+                        path.extend(filtered_relation_path[:-1])
+                    else:
+                        field = opts.get_field(filtered_relation.relation_name)
+            if field is not None:
+                # Fields that contain one-to-many relations with a generic
+                # model (like a GenericForeignKey) cannot generate reverse
+                # relations and therefore cannot be used for reverse querying.
+                if field.is_relation and not field.related_model:
+                    raise FieldError(
+                        "Field %r does not generate an automatic reverse "
+                        "relation and therefore cannot be used for reverse "
+                        "querying. If it is a GenericForeignKey, consider "
+                        "adding a GenericRelation." % name
+                    )
+                try:
+                    model = field.model._meta.concrete_model
+                except AttributeError:
+                    # QuerySet.annotate() may introduce fields that aren't
+                    # attached to a model.
+                    model = None
+            else:
+                # We didn't find the current field, so move position back
+                # one step.
+                pos -= 1
+                if pos == -1 or fail_on_missing:
+                    available = sorted(
+                        [
+                            *get_field_names_from_opts(opts),
+                            *self.annotation_select,
+                            *self._filtered_relations,
+                        ]
+                    )
+>                   raise FieldError(
+                        "Cannot resolve keyword '%s' into field. "
+                        "Choices are: %s" % (name, ", ".join(available))
+                    )
+E                   django.core.exceptions.FieldError: Cannot resolve keyword 'ftsfilemovement' into field. Choices are: created_at, current_holder_id, id, owner_id, status, updated_at
+
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1813: FieldError
+___________ test_tc_br009_01_unauthorized_users_cannot_access_files ____________
+
+stub_iam = <function stub_iam.<locals>._install at 0x730723095620>
+
+    def test_tc_br009_01_unauthorized_users_cannot_access_files(stub_iam):
+        """
+        Test ID: TC-BR009-01
+        Source ID: BR-FTS-009
+        Purpose: Verify that unauthorized users cannot access files they are not associated with.
+        Preconditions: User A owns File F. User B is an Institute Employee not associated with File F.
+        Action/Input: User B attempts to view File F via direct ID access or search.
+        Expected Result: Access is denied; File F is not visible in User B's Inbox/Outbox or search
+                         results.
+        Test Type: Authorization
+        """
+        from modules.fts.selectors.file_queries import (
+            get_file_detail,
+            get_inbox_files,
+            get_outbox_files,
+        )
+    
+        _, user_a_id = _get_auth_client(stub_iam)
+        user_b_id = uuid.uuid4()
+        user_c_id = uuid.uuid4()  # Unauthorized user
+    
+        # User A creates and sends file to B (C is not associated)
+        file_obj = create_file_service(str(user_a_id), "BR-009 access control")
+        forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "A to B")
+    
+        # User C cannot view file detail
+        with pytest.raises(Exception):
+            get_file_detail(actor_id=str(user_c_id), file_id=str(file_obj.id))
+    
+        # User C's inbox does not contain the file
+>       inbox_c = get_inbox_files(actor_id=str(user_c_id))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/a8/br/test_br_business_rules.py:357: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/fts/selectors/file_queries.py:7: in get_inbox_files
+    return FtsFile.objects.filter(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1495: in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1513: in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1523: in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1648: in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1680: in _add_q
+    child_clause, needed_inner = self.build_filter(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1505: in build_filter
+    return self._add_q(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1680: in _add_q
+    child_clause, needed_inner = self.build_filter(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1528: in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1335: in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.db.models.sql.query.Query object at 0x730722c0f140>
+names = ['ftsfilemovement', 'receiver_id'], opts = <Options for FtsFile>
+allow_many = True, fail_on_missing = False
+
+    def names_to_path(self, names, opts, allow_many=True, fail_on_missing=False):
+        """
+        Walk the list of names and turns them into PathInfo tuples. A single
+        name in 'names' can generate multiple PathInfos (m2m, for example).
+    
+        'names' is the path of names to travel, 'opts' is the model Options we
+        start the name resolving from, 'allow_many' is as for setup_joins().
+        If fail_on_missing is set to True, then a name that can't be resolved
+        will generate a FieldError.
+    
+        Return a list of PathInfo tuples. In addition return the final field
+        (the last used join field) and target (which is a field guaranteed to
+        contain the same value as the final field). Finally, return those names
+        that weren't found (which are likely transforms and the final lookup).
+        """
+        path, names_with_path = [], []
+        for pos, name in enumerate(names):
+            cur_names_with_path = (name, [])
+            if name == "pk" and opts is not None:
+                name = opts.pk.name
+    
+            field = None
+            filtered_relation = None
+            try:
+                if opts is None:
+                    raise FieldDoesNotExist
+                field = opts.get_field(name)
+            except FieldDoesNotExist:
+                if name in self.annotation_select:
+                    field = self.annotation_select[name].output_field
+                elif name in self._filtered_relations and pos == 0:
+                    filtered_relation = self._filtered_relations[name]
+                    if LOOKUP_SEP in filtered_relation.relation_name:
+                        parts = filtered_relation.relation_name.split(LOOKUP_SEP)
+                        filtered_relation_path, field, _, _ = self.names_to_path(
+                            parts,
+                            opts,
+                            allow_many,
+                            fail_on_missing,
+                        )
+                        path.extend(filtered_relation_path[:-1])
+                    else:
+                        field = opts.get_field(filtered_relation.relation_name)
+            if field is not None:
+                # Fields that contain one-to-many relations with a generic
+                # model (like a GenericForeignKey) cannot generate reverse
+                # relations and therefore cannot be used for reverse querying.
+                if field.is_relation and not field.related_model:
+                    raise FieldError(
+                        "Field %r does not generate an automatic reverse "
+                        "relation and therefore cannot be used for reverse "
+                        "querying. If it is a GenericForeignKey, consider "
+                        "adding a GenericRelation." % name
+                    )
+                try:
+                    model = field.model._meta.concrete_model
+                except AttributeError:
+                    # QuerySet.annotate() may introduce fields that aren't
+                    # attached to a model.
+                    model = None
+            else:
+                # We didn't find the current field, so move position back
+                # one step.
+                pos -= 1
+                if pos == -1 or fail_on_missing:
+                    available = sorted(
+                        [
+                            *get_field_names_from_opts(opts),
+                            *self.annotation_select,
+                            *self._filtered_relations,
+                        ]
+                    )
+>                   raise FieldError(
+                        "Cannot resolve keyword '%s' into field. "
+                        "Choices are: %s" % (name, ", ".join(available))
+                    )
+E                   django.core.exceptions.FieldError: Cannot resolve keyword 'ftsfilemovement' into field. Choices are: created_at, current_holder_id, id, owner_id, status, updated_at
+
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1813: FieldError
 ================================ tests coverage ================================
 _______________ coverage: platform linux, python 3.12.8-final-0 ________________
 
@@ -8,16 +446,21 @@ modules/fts/api/serializers.py                                               107
 modules/fts/api/urls.py                                                        4      0      0      0   100%
 modules/fts/api/views.py                                                      78     29     10      1    59%   47-54, 71, 83-94, 112-128, 136-141
 modules/fts/apps.py                                                            4      0      0      0   100%
-modules/fts/domain/commands.py                                                43     13     22      7    63%   14, 39, 54, 69, 91-99, 111, 113, 115
+modules/fts/domain/commands.py                                                43      9     22      9    72%   14, 39, 54, 69, 92, 95, 111, 113, 115
 modules/fts/domain/states.py                                                   6      0      0      0   100%
 modules/fts/migrations/0001_initial.py                                         6      0      0      0   100%
 modules/fts/migrations/0002_ftsfilemovement_ftsfile_current_holder_id.py       5      0      0      0   100%
 modules/fts/migrations/__init__.py                                             0      0      0      0   100%
 modules/fts/models.py                                                         47      5      0      0    89%   24, 36, 47, 59, 77
+modules/fts/selectors/file_queries.py                                         18      7      2      0    55%   14, 29-31, 35, 39, 44
 modules/fts/services/file_archival.py                                         17      2      2      0    89%   11-12
 modules/fts/services/file_creation.py                                         43     10     12      2    78%   65-66, 69, 109-110, 113, 119-131
-modules/fts/services/file_movement.py                                         48     27     22      4    36%   23, 26-27, 30, 64-65, 90-156
+modules/fts/services/file_movement.py                                         48     12     22      8    63%   23, 26-27, 30, 64-65, 92, 95, 98, 140-141, 156
 ----------------------------------------------------------------------------------------------------------------------
-TOTAL                                                                        408    114     76     15    67%
+TOTAL                                                                        426    102     78     21    72%
 Coverage XML written to file a8_results/br/coverage.xml
-8 passed, 6 skipped in 3.06s
+=========================== short test summary info ============================
+FAILED tests/a8/br/test_br_business_rules.py::test_tc_br007_01_return_file_to_sender
+FAILED tests/a8/br/test_br_business_rules.py::test_tc_br008_01_forwarding_events_recorded_chronologically
+FAILED tests/a8/br/test_br_business_rules.py::test_tc_br009_01_unauthorized_users_cannot_access_files
+3 failed, 8 passed, 3 skipped in 3.73s

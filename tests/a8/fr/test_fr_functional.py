@@ -22,6 +22,7 @@ from modules.fts.services.file_creation import (
     edit_draft_service,
 )
 from modules.fts.services.file_movement import forward_file_service
+from modules.fts.services.file_archival import archive_file_service
 
 pytestmark = pytest.mark.django_db
 
@@ -280,11 +281,30 @@ def test_tc_fts_008_return_received_file_to_sender(stub_iam):
                      the return.
     Test Type: Positive
     """
-    pytest.skip(
-        "NOT_AUTOMATED: return_file workflow cannot be executed due to production bugs in "
-        "return_file_service (type mismatch in holder check and unhandled UUID JSON serialization "
-        "in FtsAuditLog details)."
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+    file_obj = create_file_service(str(user_a_id), "Initial draft for return test")
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "Forwarding to B")
+
+    client_b, _ = _get_auth_client(stub_iam, user_id=user_b_id)
+    ret_payload = {"movement_comment": "Returning file to original sender"}
+    response = client_b.post(
+        f"/api/fts/v1/{file_obj.id}/return/", ret_payload, format="json"
     )
+    assert response.status_code == status.HTTP_200_OK
+
+    file_obj.refresh_from_db()
+    assert file_obj.current_holder_id == user_a_id
+    assert file_obj.status == "CIRCULATED"
+
+    movements = list(
+        FtsFileMovement.objects.filter(file_id=file_obj.id).order_by("created_at")
+    )
+    assert len(movements) == 2
+    assert movements[1].sender_id == user_b_id
+    assert movements[1].receiver_id == user_a_id
+    assert movements[1].movement_type == "RETURN"
+    assert movements[1].comment == "Returning file to original sender"
 
 
 def test_tc_fts_009_inbox_and_outbox_visibility(stub_iam):
@@ -297,10 +317,28 @@ def test_tc_fts_009_inbox_and_outbox_visibility(stub_iam):
     Expected Result: Inbox lists received files. Outbox lists sent files.
     Test Type: Positive
     """
-    pytest.skip(
-        "NOT_AUTOMATED: Inbox and Outbox views are not exposed via API and selector functions "
-        "get_inbox_files/get_outbox_files fail due to invalid relation ftsfilemovement on FtsFile."
-    )
+    from modules.fts.selectors.file_queries import get_inbox_files, get_outbox_files
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+
+    # User A creates and sends a file to User B (appears in A's outbox, B's inbox)
+    file_obj = create_file_service(str(user_a_id), "File for inbox/outbox test")
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "Sending to B")
+
+    # User B creates and sends a file back to User A (appears in B's outbox, A's inbox)
+    file_obj_2 = create_file_service(str(user_b_id), "Return file for visibility test")
+    forward_file_service(str(user_b_id), str(file_obj_2.id), str(user_a_id), "Sending to A")
+
+    # Verify User A's inbox contains file_obj_2 (received from B)
+    inbox_a = get_inbox_files(actor_id=str(user_a_id))
+    inbox_a_ids = [str(f["id"]) for f in inbox_a]
+    assert str(file_obj_2.id) in inbox_a_ids
+
+    # Verify User A's outbox contains file_obj (sent to B)
+    outbox_a = get_outbox_files(actor_id=str(user_a_id))
+    outbox_a_ids = [str(f["id"]) for f in outbox_a]
+    assert str(file_obj.id) in outbox_a_ids
 
 
 def test_tc_fts_010_open_files_from_inbox_and_outbox(stub_iam):
@@ -313,10 +351,29 @@ def test_tc_fts_010_open_files_from_inbox_and_outbox(stub_iam):
     Expected Result: File details, comments, and attachments are displayed correctly for both.
     Test Type: Positive
     """
-    pytest.skip(
-        "NOT_AUTOMATED: File detail view is not exposed via API and backend selector "
-        "get_file_detail fails due to invalid relation ftsfilemovement on FtsFile."
+    from modules.fts.selectors.file_queries import get_file_detail
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+
+    # User A creates file with attachment and sends to B
+    file_obj = create_file_service(
+        actor_id=str(user_a_id),
+        initial_comment="Detail view test comment",
+        attachment_urls=["https://documents.fusion.edu/detail_test.pdf"],
     )
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "Forward for detail")
+
+    # User B opens the file from their Inbox (detail view)
+    detail_b = get_file_detail(actor_id=str(user_b_id), file_id=str(file_obj.id))
+    assert detail_b["id"] == str(file_obj.id)
+    assert detail_b["status"] == "CIRCULATED"
+    assert detail_b["current_holder_id"] == str(user_b_id)
+
+    # User A opens the file from their Outbox (detail view)
+    detail_a = get_file_detail(actor_id=str(user_a_id), file_id=str(file_obj.id))
+    assert detail_a["id"] == str(file_obj.id)
+    assert detail_a["owner_id"] == str(user_a_id)
 
 
 def test_tc_fts_011_chronological_tracking_history_visibility(stub_iam):
@@ -331,10 +388,41 @@ def test_tc_fts_011_chronological_tracking_history_visibility(stub_iam):
                      comments, and attachments.
     Test Type: Positive
     """
-    pytest.skip(
-        "NOT_AUTOMATED: File tracking history view is not exposed via API and backend selector "
-        "get_file_history fails due to invalid relation ftsfilemovement on FtsFile."
-    )
+    from modules.fts.selectors.file_queries import get_file_history
+    from modules.fts.services.file_movement import return_file_service
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+
+    # Create file and forward to B
+    file_obj = create_file_service(str(user_a_id), "History tracking test")
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "First forward")
+
+    # B returns to A
+    return_file_service(str(user_b_id), str(file_obj.id), "Returning for history")
+
+    # View history as User A (associated user)
+    history = get_file_history(actor_id=str(user_a_id), file_id=str(file_obj.id))
+
+    assert len(history) >= 3  # CREATE + FORWARD + RETURN
+
+    # Verify chronological ordering
+    timestamps = [entry["created_at"] for entry in history]
+    assert timestamps == sorted(timestamps)
+
+    # Verify forward event details
+    forward_events = [e for e in history if e.get("action") == "FORWARD"]
+    assert len(forward_events) >= 1
+    assert forward_events[0]["sender_id"] == str(user_a_id)
+    assert forward_events[0]["receiver_id"] == str(user_b_id)
+    assert forward_events[0]["comment"] == "First forward"
+
+    # Verify return event details
+    return_events = [e for e in history if e.get("action") == "RETURN"]
+    assert len(return_events) >= 1
+    assert return_events[0]["sender_id"] == str(user_b_id)
+    assert return_events[0]["receiver_id"] == str(user_a_id)
+    assert return_events[0]["comment"] == "Returning for history"
 
 
 def test_tc_fts_012_only_file_owner_can_archive(stub_iam):
@@ -492,11 +580,54 @@ def test_tc_fts_017_audit_logs_maintained_for_all_key_actions(stub_iam):
     Expected Result: Audit log contains entries for each action with timestamps and user details.
     Test Type: Positive
     """
-    pytest.skip(
-        "NOT_AUTOMATED: Audit log verification for full action lifecycle cannot be completed "
-        "because return_file_service fails with UUID JSON serialization error when recording "
-        "RETURN audit log."
+    from modules.fts.services.file_movement import return_file_service
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+
+    # Create file with comment and attachment
+    file_obj = create_file_service(
+        actor_id=str(user_a_id),
+        initial_comment="Audit lifecycle comment",
+        attachment_urls=["https://documents.fusion.edu/audit_test.pdf"],
     )
+
+    # Edit draft (adds comment/attachment)
+    edit_draft_service(
+        actor_id=str(user_a_id),
+        file_id=str(file_obj.id),
+        new_comment="Edited for audit",
+        new_attachment_urls=["https://documents.fusion.edu/audit_edited.pdf"],
+    )
+
+    # Forward to B
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "Forward for audit")
+
+    # Return to A
+    return_file_service(str(user_b_id), str(file_obj.id), "Return for audit")
+
+    # Archive
+    archive_file_service(str(user_a_id), str(file_obj.id))
+
+    # Verify audit log contains all actions
+    logs = list(
+        FtsAuditLog.objects.filter(file_id=str(file_obj.id)).order_by("created_at")
+    )
+    actions = [log.action for log in logs]
+
+    assert "CREATE" in actions
+    assert "EDIT_DRAFT" in actions
+    assert "FORWARD" in actions
+    assert "RETURN" in actions
+    assert "ARCHIVE" in actions
+
+    # Verify timestamps are chronological
+    timestamps = [log.created_at for log in logs]
+    assert timestamps == sorted(timestamps)
+
+    # Verify actor IDs are recorded
+    for log in logs:
+        assert log.actor_id is not None
 
 
 def test_tc_fts_018_fts_apis_exposed_for_other_modules(stub_iam):

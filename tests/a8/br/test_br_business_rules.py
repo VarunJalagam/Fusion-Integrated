@@ -249,11 +249,32 @@ def test_tc_br007_01_return_file_to_sender(stub_iam):
                      indicating return from User B to User A.
     Test Type: Eligibility/Routing
     """
-    pytest.skip(
-        "NOT_AUTOMATED: return_file workflow cannot be executed due to production bugs in "
-        "return_file_service (type mismatch in holder check and unhandled UUID JSON serialization "
-        "in FtsAuditLog details)."
+    from modules.fts.services.file_movement import return_file_service
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+    file_obj = create_file_service(str(user_a_id), "BR-007 return test")
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "BR-007 forward")
+
+    # User B returns the file to User A
+    return_file_service(
+        actor_id=str(user_b_id),
+        file_id=str(file_obj.id),
+        movement_comment="BR-007 returning to sender",
     )
+
+    file_obj.refresh_from_db()
+    assert file_obj.current_holder_id == user_a_id
+    assert file_obj.status == "CIRCULATED"
+
+    # Movement record indicates return from B to A
+    movement = FtsFileMovement.objects.filter(
+        file_id=file_obj.id, movement_type="RETURN"
+    ).first()
+    assert movement is not None
+    assert movement.sender_id == user_b_id
+    assert movement.receiver_id == user_a_id
+    assert movement.comment == "BR-007 returning to sender"
 
 
 def test_tc_br008_01_forwarding_events_recorded_chronologically(stub_iam):
@@ -268,10 +289,39 @@ def test_tc_br008_01_forwarding_events_recorded_chronologically(stub_iam):
                      Timestamp=Now, Comment=C, Attachment=Att. Records are ordered chronologically.
     Test Type: Audit/Record Constraint
     """
-    pytest.skip(
-        "NOT_AUTOMATED: File movement history view is not exposed via API and selector "
-        "get_file_history fails due to invalid relation ftsfilemovement on FtsFile."
+    from modules.fts.selectors.file_queries import get_file_history
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+
+    file_obj = create_file_service(
+        actor_id=str(user_a_id),
+        initial_comment="BR-008 initial",
+        attachment_urls=["https://documents.fusion.edu/br008.pdf"],
     )
+    forward_file_service(
+        actor_id=str(user_a_id),
+        file_id=str(file_obj.id),
+        receiver_id=str(user_b_id),
+        movement_comment="BR-008 forward comment",
+    )
+
+    # View movement history
+    history = get_file_history(actor_id=str(user_a_id), file_id=str(file_obj.id))
+
+    assert len(history) >= 2  # CREATE + FORWARD
+
+    # Verify forward event details
+    forward_events = [e for e in history if e.get("action") == "FORWARD"]
+    assert len(forward_events) >= 1
+    fwd = forward_events[0]
+    assert fwd["sender_id"] == str(user_a_id)
+    assert fwd["receiver_id"] == str(user_b_id)
+    assert fwd["comment"] == "BR-008 forward comment"
+
+    # Verify chronological ordering
+    timestamps = [entry["created_at"] for entry in history]
+    assert timestamps == sorted(timestamps)
 
 
 def test_tc_br009_01_unauthorized_users_cannot_access_files(stub_iam):
@@ -285,10 +335,33 @@ def test_tc_br009_01_unauthorized_users_cannot_access_files(stub_iam):
                      results.
     Test Type: Authorization
     """
-    pytest.skip(
-        "NOT_AUTOMATED: File access and Inbox/Outbox views are not exposed via API and selectors "
-        "fail due to invalid relation ftsfilemovement on FtsFile."
+    from modules.fts.selectors.file_queries import (
+        get_file_detail,
+        get_inbox_files,
+        get_outbox_files,
     )
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+    user_c_id = uuid.uuid4()  # Unauthorized user
+
+    # User A creates and sends file to B (C is not associated)
+    file_obj = create_file_service(str(user_a_id), "BR-009 access control")
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "A to B")
+
+    # User C cannot view file detail
+    with pytest.raises(Exception):
+        get_file_detail(actor_id=str(user_c_id), file_id=str(file_obj.id))
+
+    # User C's inbox does not contain the file
+    inbox_c = get_inbox_files(actor_id=str(user_c_id))
+    inbox_c_ids = [str(f["id"]) for f in inbox_c]
+    assert str(file_obj.id) not in inbox_c_ids
+
+    # User C's outbox does not contain the file
+    outbox_c = get_outbox_files(actor_id=str(user_c_id))
+    outbox_c_ids = [str(f["id"]) for f in outbox_c]
+    assert str(file_obj.id) not in outbox_c_ids
 
 
 def test_tc_br010_01_sensitive_actions_restricted_for_archived_state(stub_iam):

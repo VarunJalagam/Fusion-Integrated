@@ -435,11 +435,38 @@ def test_tc_fts_013_return_file_to_sender(stub_iam):
                      event is triggered.
     Test Type: Positive
     """
-    pytest.skip(
-        "NOT_AUTOMATED: return_file workflow cannot be executed due to production bugs in "
-        "return_file_service (type mismatch in holder check and unhandled UUID JSON serialization "
-        "in FtsAuditLog details)."
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+    file_obj = create_file_service(str(user_a_id), "File for UC return test")
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "Forward for return")
+
+    client_b, _ = _get_auth_client(stub_iam, user_id=user_b_id)
+    ret_payload = {"movement_comment": "Returning per UC-004 main flow"}
+    response = client_b.post(
+        f"/api/fts/v1/{file_obj.id}/return/", ret_payload, format="json"
     )
+    assert response.status_code == status.HTTP_200_OK
+
+    file_obj.refresh_from_db()
+    assert file_obj.current_holder_id == user_a_id
+    assert file_obj.status == "CIRCULATED"
+
+    # Return movement is recorded chronologically
+    movements = list(
+        FtsFileMovement.objects.filter(file_id=file_obj.id).order_by("created_at")
+    )
+    assert len(movements) == 2
+    assert movements[1].sender_id == user_b_id
+    assert movements[1].receiver_id == user_a_id
+    assert movements[1].movement_type == "RETURN"
+    assert movements[1].comment == "Returning per UC-004 main flow"
+
+    # Audit info is recorded
+    audit = FtsAuditLog.objects.filter(
+        file_id=str(file_obj.id), action="RETURN"
+    ).first()
+    assert audit is not None
+    assert audit.actor_id == user_b_id
 
 
 def test_tc_fts_014_return_missing_movement_comment(stub_iam):
@@ -515,11 +542,38 @@ def test_tc_fts_016_view_inbox_outbox_and_open_files(stub_iam):
                      attachments, status, and permitted actions.
     Test Type: Positive
     """
-    pytest.skip(
-        "NOT_AUTOMATED: Inbox/Outbox and detail views are not exposed via API and backend "
-        "selectors get_inbox_files/get_outbox_files crash due to invalid relation "
-        "ftsfilemovement on FtsFile."
+    from modules.fts.selectors.file_queries import (
+        get_file_detail,
+        get_inbox_files,
+        get_outbox_files,
     )
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+
+    # User A sends file to B
+    file_obj = create_file_service(
+        actor_id=str(user_a_id),
+        initial_comment="UC-005 visibility comment",
+        attachment_urls=["https://documents.fusion.edu/uc005.pdf"],
+    )
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "UC-005 forward")
+
+    # Verify B's inbox lists the file
+    inbox_b = get_inbox_files(actor_id=str(user_b_id))
+    inbox_b_ids = [str(f["id"]) for f in inbox_b]
+    assert str(file_obj.id) in inbox_b_ids
+
+    # Verify A's outbox lists the file
+    outbox_a = get_outbox_files(actor_id=str(user_a_id))
+    outbox_a_ids = [str(f["id"]) for f in outbox_a]
+    assert str(file_obj.id) in outbox_a_ids
+
+    # Open file detail (B viewing from inbox)
+    detail = get_file_detail(actor_id=str(user_b_id), file_id=str(file_obj.id))
+    assert detail["id"] == str(file_obj.id)
+    assert detail["status"] == "CIRCULATED"
+    assert detail["current_holder_id"] == str(user_b_id)
 
 
 def test_tc_fts_017_unauthorized_files_not_exposed(stub_iam):
@@ -533,10 +587,19 @@ def test_tc_fts_017_unauthorized_files_not_exposed(stub_iam):
     Expected Result: FTS does not expose/open the file.
     Test Type: Negative
     """
-    pytest.skip(
-        "NOT_AUTOMATED: File detail viewing is not exposed via API and backend selector "
-        "get_file_detail crashes due to invalid relation ftsfilemovement on FtsFile."
-    )
+    from modules.fts.selectors.file_queries import get_file_detail
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+    user_c_id = uuid.uuid4()  # Unauthorized user
+
+    # User A sends file to B only
+    file_obj = create_file_service(str(user_a_id), "Unauthorized access test")
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "A to B only")
+
+    # User C (not associated) attempts to view the file
+    with pytest.raises(Exception):
+        get_file_detail(actor_id=str(user_c_id), file_id=str(file_obj.id))
 
 
 def test_tc_fts_018_unauthorized_actions_denied_for_state(stub_iam):
@@ -582,10 +645,32 @@ def test_tc_fts_019_view_complete_tracking_history(stub_iam):
                      comments, and attachments for all movements.
     Test Type: Positive
     """
-    pytest.skip(
-        "NOT_AUTOMATED: File tracking history view is not exposed via API and backend selector "
-        "get_file_history crashes due to invalid relation ftsfilemovement on FtsFile."
-    )
+    from modules.fts.selectors.file_queries import get_file_history
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+
+    file_obj = create_file_service(str(user_a_id), "UC-006 history test")
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "UC-006 forward")
+
+    # View history as authorized user (A is associated as sender/owner)
+    history = get_file_history(actor_id=str(user_a_id), file_id=str(file_obj.id))
+
+    assert len(history) >= 2  # At least CREATE + FORWARD
+
+    # Verify chronological ordering
+    timestamps = [entry["created_at"] for entry in history]
+    assert timestamps == sorted(timestamps)
+
+    # Verify forward event contains required fields
+    forward_events = [e for e in history if e.get("action") == "FORWARD"]
+    assert len(forward_events) >= 1
+    fwd = forward_events[0]
+    assert "sender_id" in fwd
+    assert "receiver_id" in fwd
+    assert "comment" in fwd
+    assert fwd["sender_id"] == str(user_a_id)
+    assert fwd["receiver_id"] == str(user_b_id)
 
 
 def test_tc_fts_020_history_access_denied_unauthorized_user(stub_iam):
@@ -599,10 +684,18 @@ def test_tc_fts_020_history_access_denied_unauthorized_user(stub_iam):
     Expected Result: FTS denies history access.
     Test Type: Negative
     """
-    pytest.skip(
-        "NOT_AUTOMATED: File tracking history view is not exposed via API and backend selector "
-        "get_file_history crashes due to invalid relation ftsfilemovement on FtsFile."
-    )
+    from modules.fts.selectors.file_queries import get_file_history
+
+    _, user_a_id = _get_auth_client(stub_iam)
+    user_b_id = uuid.uuid4()
+    user_c_id = uuid.uuid4()  # Unauthorized
+
+    file_obj = create_file_service(str(user_a_id), "History access control test")
+    forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "A to B")
+
+    # User C (not associated) attempts to view history
+    with pytest.raises(Exception):
+        get_file_history(actor_id=str(user_c_id), file_id=str(file_obj.id))
 
 
 def test_tc_fts_021_owner_archives_circulated_file(stub_iam):
@@ -834,4 +927,3 @@ def test_tc_fts_030_reject_domain_specific_policy_definition(stub_iam):
         "NOT_AUTOMATED: Domain-specific approval policy definition APIs are outside FTS scope "
         "and not implemented in modules/fts."
     )
-

@@ -1,1 +1,126 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="1" tests="15" time="3.075" timestamp="2026-11-09T07:51:46.896565+05:30" hostname="varun-HP-Laptop-15-fd1xxx"><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_001_create_file_no_draft_edit" time="2.563" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_002_circulate_file_zero_draft_edit" time="0.015" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_003_edit_draft_file_once" time="0.010" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_004_circulate_file_after_one_draft_edit" time="0.012" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_005_discard_draft_zero_edit" time="0.011" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_006_discard_draft_after_one_edit" time="0.014" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_007_forward_active_file_to_new_recipient" time="0.015" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_008_onward_forwarding_one_loop_traversal" time="0.013" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_009_return_file_to_previous_sender" time="0.004"><skipped type="pytest.skip" message="NOT_AUTOMATED: return_file workflow cannot be executed due to production bugs in return_file_service (type mismatch in holder check and unhandled UUID JSON serialization in FtsAuditLog details).">/home/varun/Fusion-Integrated/tests/a8/wf/test_wf_workflows.py:316: NOT_AUTOMATED: return_file workflow cannot be executed due to production bugs in return_file_service (type mismatch in holder check and unhandled UUID JSON serialization in FtsAuditLog details).</skipped></testcase><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_010_archival_of_completed_circulated_file" time="0.029" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_011_non_owner_cannot_archive_file" time="0.023" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_012_archived_file_cannot_be_archived_again_or_modified" time="0.021" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_013_forward_fails_without_mandatory_comment" time="0.011" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_014_create_file_fails_without_mandatory_comment" time="0.005" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_015_circulated_file_cannot_be_discarded" time="0.061" /></testsuite></testsuites>
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="15" time="3.545" timestamp="2026-11-10T02:16:47.396117+05:30" hostname="varun-HP-Laptop-15-fd1xxx"><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_001_create_file_no_draft_edit" time="2.717" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_002_circulate_file_zero_draft_edit" time="0.026" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_003_edit_draft_file_once" time="0.021" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_004_circulate_file_after_one_draft_edit" time="0.026" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_005_discard_draft_zero_edit" time="0.020" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_006_discard_draft_after_one_edit" time="0.018" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_007_forward_active_file_to_new_recipient" time="0.019" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_008_onward_forwarding_one_loop_traversal" time="0.028" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_009_return_file_to_previous_sender" time="0.016"><failure message="TypeError: Object of type UUID is not JSON serializable">stub_iam = &lt;function stub_iam.&lt;locals&gt;._install at 0x77c3cb6b7600&gt;
+
+    def test_tc_fts_009_return_file_to_previous_sender(stub_iam):
+        """
+        Test ID: TC-FTS-009
+        Source ID: BW-FTS-03, FTS-UC-004, BR-FTS-006, BR-FTS-013
+        Purpose: Verify returning an active circulated file to the previous sender.
+        Preconditions: User has received an active circulated file. Previous sender is known.
+        Action/Input: Return file to previous sender with mandatory movement comment.
+        Expected Result: File held by previous sender. History records return action. Return
+                         notification triggered.
+        Test Type: Positive
+        """
+        from modules.fts.services.file_movement import return_file_service
+    
+        _, user_a_id = _get_auth_client(stub_iam)
+        user_b_id = uuid.uuid4()
+        file_obj = create_file_service(str(user_a_id), "WF return workflow test")
+        forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "WF forward")
+    
+        # User B returns file to User A
+&gt;       return_file_service(
+            actor_id=str(user_b_id),
+            file_id=str(file_obj.id),
+            movement_comment="WF-009 returning to previous sender",
+        )
+
+tests/a8/wf/test_wf_workflows.py:324: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/fts/services/file_movement.py:148: in return_file_service
+    FtsAuditLog.objects.create(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:665: in create
+    obj.save(force_insert=True, using=self.db)
+.venv/lib/python3.12/site-packages/django/db/models/base.py:902: in save
+    self.save_base(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1008: in save_base
+    updated = self._save_table(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1169: in _save_table
+    results = self._do_insert(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1210: in _do_insert
+    return manager._insert(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1873: in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py:1882: in execute_sql
+    cursor.execute(sql, params)
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:79: in execute
+    return self._execute_with_wrappers(
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:92: in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:105: in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/cursor.py:113: in execute
+    self._conn.wait(
+.venv/lib/python3.12/site-packages/psycopg/connection.py:495: in wait
+    return waiting.wait(
+psycopg_binary/_psycopg/waiting.pyx:227: in psycopg_binary._psycopg.wait_c
+    ???
+.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py:205: in _execute_gen
+    pgq = self._convert_query(query, params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py:465: in _convert_query
+    pgq.convert(query, params)
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:289: in convert
+    self.dump(vars)
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:299: in dump
+    self.params = tuple(
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:300: in &lt;genexpr&gt;
+    self._tx.as_literal(p) if p is not None else b"NULL" for p in params
+    ^^^^^^^^^^^^^^^^^^^^^^
+psycopg_binary/_psycopg/transform.pyx:205: in psycopg_binary._psycopg.Transformer.as_literal
+    ???
+psycopg_binary/_psycopg/transform.pyx:214: in psycopg_binary._psycopg.Transformer.as_literal
+    ???
+.venv/lib/python3.12/site-packages/psycopg/adapt.py:59: in quote
+    if (value := self.dump(obj)) is None:
+                 ^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/types/json.py:218: in dump
+    if isinstance((data := dumps(obj)), str):
+                           ^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/__init__.py:231: in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:200: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:258: in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;json.encoder.JSONEncoder object at 0x77c3d0c465d0&gt;
+o = UUID('938c5e9d-6f1e-4e42-a187-591f9a6403a1')
+
+    def default(self, o):
+        """Implement this method in a subclass such that it returns
+        a serializable object for ``o``, or calls the base implementation
+        (to raise a ``TypeError``).
+    
+        For example, to support arbitrary iterators, you could
+        implement default like this::
+    
+            def default(self, o):
+                try:
+                    iterable = iter(o)
+                except TypeError:
+                    pass
+                else:
+                    return list(iterable)
+                # Let the base class default method raise the TypeError
+                return super().default(o)
+    
+        """
+&gt;       raise TypeError(f'Object of type {o.__class__.__name__} '
+                        f'is not JSON serializable')
+E       TypeError: Object of type UUID is not JSON serializable
+
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:180: TypeError</failure></testcase><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_010_archival_of_completed_circulated_file" time="0.029" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_011_non_owner_cannot_archive_file" time="0.024" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_012_archived_file_cannot_be_archived_again_or_modified" time="0.017" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_013_forward_fails_without_mandatory_comment" time="0.010" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_014_create_file_fails_without_mandatory_comment" time="0.008" /><testcase classname="tests.a8.wf.test_wf_workflows" name="test_tc_fts_015_circulated_file_cannot_be_discarded" time="0.072" /></testsuite></testsuites>

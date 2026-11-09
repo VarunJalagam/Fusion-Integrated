@@ -1,4 +1,681 @@
-..s.........s..ss.ss....ssssss                                           [100%]
+..s.........F..F..F.....ssssss                                           [100%]
+=================================== FAILURES ===================================
+____________________ test_tc_fts_013_return_file_to_sender _____________________
+
+stub_iam = <function stub_iam.<locals>._install at 0x75d9fd532200>
+
+    def test_tc_fts_013_return_file_to_sender(stub_iam):
+        """
+        Test ID: TC-FTS-013
+        Source ID: FTS-UC-004 Main Success Scenario
+        Purpose: Verify successful return of a received file to its sender.
+        Preconditions: File is active and associated with the recipient. Recipient is authorized
+                       to return it. Known sender exists for current movement.
+        Action/Input: Select Return on received file. Enter mandatory movement comment.
+                      Optionally add attachment. Confirm Return.
+        Expected Result: File holder is updated to previous sender. Return movement is recorded
+                         chronologically. Audit/version info is recorded. File-returned notification
+                         event is triggered.
+        Test Type: Positive
+        """
+        _, user_a_id = _get_auth_client(stub_iam)
+        user_b_id = uuid.uuid4()
+        file_obj = create_file_service(str(user_a_id), "File for UC return test")
+        forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "Forward for return")
+    
+        client_b, _ = _get_auth_client(stub_iam, user_id=user_b_id)
+        ret_payload = {"movement_comment": "Returning per UC-004 main flow"}
+>       response = client_b.post(
+            f"/api/fts/v1/{file_obj.id}/return/", ret_payload, format="json"
+        )
+
+tests/a8/uc/test_uc_use_cases.py:445: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/rest_framework/test.py:302: in post
+    response = super().post(
+.venv/lib/python3.12/site-packages/rest_framework/test.py:216: in post
+    return self.generic('POST', path, data, content_type, **extra)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/rest_framework/test.py:240: in generic
+    return super().generic(
+.venv/lib/python3.12/site-packages/django/test/client.py:671: in generic
+    return self.request(**r)
+           ^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/rest_framework/test.py:292: in request
+    return super().request(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/rest_framework/test.py:244: in request
+    request = super().request(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/test/client.py:1090: in request
+    self.check_exception(response)
+.venv/lib/python3.12/site-packages/django/test/client.py:805: in check_exception
+    raise exc_value
+.venv/lib/python3.12/site-packages/django/core/handlers/exception.py:55: in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/core/handlers/base.py:197: in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/views/decorators/csrf.py:65: in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/views/generic/base.py:105: in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/rest_framework/views.py:526: in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/rest_framework/views.py:474: in handle_exception
+    self.raise_uncaught_exception(exc)
+.venv/lib/python3.12/site-packages/rest_framework/views.py:485: in raise_uncaught_exception
+    raise exc
+.venv/lib/python3.12/site-packages/rest_framework/views.py:523: in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+modules/fts/api/views.py:117: in post
+    file = return_file_service(actor_id, file_id, movement_comment, attachment_urls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+modules/fts/services/file_movement.py:148: in return_file_service
+    FtsAuditLog.objects.create(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:665: in create
+    obj.save(force_insert=True, using=self.db)
+.venv/lib/python3.12/site-packages/django/db/models/base.py:902: in save
+    self.save_base(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1008: in save_base
+    updated = self._save_table(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1169: in _save_table
+    results = self._do_insert(
+.venv/lib/python3.12/site-packages/django/db/models/base.py:1210: in _do_insert
+    return manager._insert(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1873: in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py:1882: in execute_sql
+    cursor.execute(sql, params)
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:79: in execute
+    return self._execute_with_wrappers(
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:92: in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/backends/utils.py:105: in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/cursor.py:113: in execute
+    self._conn.wait(
+.venv/lib/python3.12/site-packages/psycopg/connection.py:495: in wait
+    return waiting.wait(
+psycopg_binary/_psycopg/waiting.pyx:227: in psycopg_binary._psycopg.wait_c
+    ???
+.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py:205: in _execute_gen
+    pgq = self._convert_query(query, params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py:465: in _convert_query
+    pgq.convert(query, params)
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:289: in convert
+    self.dump(vars)
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:299: in dump
+    self.params = tuple(
+.venv/lib/python3.12/site-packages/psycopg/_queries.py:300: in <genexpr>
+    self._tx.as_literal(p) if p is not None else b"NULL" for p in params
+    ^^^^^^^^^^^^^^^^^^^^^^
+psycopg_binary/_psycopg/transform.pyx:205: in psycopg_binary._psycopg.Transformer.as_literal
+    ???
+psycopg_binary/_psycopg/transform.pyx:214: in psycopg_binary._psycopg.Transformer.as_literal
+    ???
+.venv/lib/python3.12/site-packages/psycopg/adapt.py:59: in quote
+    if (value := self.dump(obj)) is None:
+                 ^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/psycopg/types/json.py:218: in dump
+    if isinstance((data := dumps(obj)), str):
+                           ^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/__init__.py:231: in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:200: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:258: in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.encoder.JSONEncoder object at 0x75da02caa6c0>
+o = UUID('db983c83-36fd-43ed-b3cf-dc40ad11b822')
+
+    def default(self, o):
+        """Implement this method in a subclass such that it returns
+        a serializable object for ``o``, or calls the base implementation
+        (to raise a ``TypeError``).
+    
+        For example, to support arbitrary iterators, you could
+        implement default like this::
+    
+            def default(self, o):
+                try:
+                    iterable = iter(o)
+                except TypeError:
+                    pass
+                else:
+                    return list(iterable)
+                # Let the base class default method raise the TypeError
+                return super().default(o)
+    
+        """
+>       raise TypeError(f'Object of type {o.__class__.__name__} '
+                        f'is not JSON serializable')
+E       TypeError: Object of type UUID is not JSON serializable
+
+../.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py:180: TypeError
+----------------------------- Captured stderr call -----------------------------
+2026-11-10 02:15:34 ERROR django.request Internal Server Error: /api/fts/v1/350d9a7d-0cdd-464d-896e-daf066c56f1d/return/
+Traceback (most recent call last):
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 526, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 474, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 485, in raise_uncaught_exception
+    raise exc
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 523, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/modules/fts/api/views.py", line 117, in post
+    file = return_file_service(actor_id, file_id, movement_comment, attachment_urls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/modules/fts/services/file_movement.py", line 148, in return_file_service
+    FtsAuditLog.objects.create(
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 665, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/base.py", line 1008, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/base.py", line 1210, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1873, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1882, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/cursor.py", line 113, in execute
+    self._conn.wait(
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/connection.py", line 495, in wait
+    return waiting.wait(
+           ^^^^^^^^^^^^^
+  File "psycopg_binary/_psycopg/waiting.pyx", line 227, in psycopg_binary._psycopg.wait_c
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py", line 205, in _execute_gen
+    pgq = self._convert_query(query, params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py", line 465, in _convert_query
+    pgq.convert(query, params)
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/_queries.py", line 289, in convert
+    self.dump(vars)
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/_queries.py", line 299, in dump
+    self.params = tuple(
+                  ^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/_queries.py", line 300, in <genexpr>
+    self._tx.as_literal(p) if p is not None else b"NULL" for p in params
+    ^^^^^^^^^^^^^^^^^^^^^^
+  File "psycopg_binary/_psycopg/transform.pyx", line 205, in psycopg_binary._psycopg.Transformer.as_literal
+  File "psycopg_binary/_psycopg/transform.pyx", line 214, in psycopg_binary._psycopg.Transformer.as_literal
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/adapt.py", line 59, in quote
+    if (value := self.dump(obj)) is None:
+                 ^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/types/json.py", line 218, in dump
+    if isinstance((data := dumps(obj)), str):
+                           ^^^^^^^^^^
+  File "/home/varun/.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/__init__.py", line 231, in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/home/varun/.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+------------------------------ Captured log call -------------------------------
+ERROR    django.request:log.py:253 Internal Server Error: /api/fts/v1/350d9a7d-0cdd-464d-896e-daf066c56f1d/return/
+Traceback (most recent call last):
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 526, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 474, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 485, in raise_uncaught_exception
+    raise exc
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 523, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/modules/fts/api/views.py", line 117, in post
+    file = return_file_service(actor_id, file_id, movement_comment, attachment_urls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/modules/fts/services/file_movement.py", line 148, in return_file_service
+    FtsAuditLog.objects.create(
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 665, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/base.py", line 1008, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/base.py", line 1210, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1873, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1882, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/cursor.py", line 113, in execute
+    self._conn.wait(
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/connection.py", line 495, in wait
+    return waiting.wait(
+           ^^^^^^^^^^^^^
+  File "psycopg_binary/_psycopg/waiting.pyx", line 227, in psycopg_binary._psycopg.wait_c
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py", line 205, in _execute_gen
+    pgq = self._convert_query(query, params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/_cursor_base.py", line 465, in _convert_query
+    pgq.convert(query, params)
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/_queries.py", line 289, in convert
+    self.dump(vars)
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/_queries.py", line 299, in dump
+    self.params = tuple(
+                  ^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/_queries.py", line 300, in <genexpr>
+    self._tx.as_literal(p) if p is not None else b"NULL" for p in params
+    ^^^^^^^^^^^^^^^^^^^^^^
+  File "psycopg_binary/_psycopg/transform.pyx", line 205, in psycopg_binary._psycopg.Transformer.as_literal
+  File "psycopg_binary/_psycopg/transform.pyx", line 214, in psycopg_binary._psycopg.Transformer.as_literal
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/adapt.py", line 59, in quote
+    if (value := self.dump(obj)) is None:
+                 ^^^^^^^^^^^^^^
+  File "/home/varun/Fusion-Integrated/.venv/lib/python3.12/site-packages/psycopg/types/json.py", line 218, in dump
+    if isinstance((data := dumps(obj)), str):
+                           ^^^^^^^^^^
+  File "/home/varun/.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/__init__.py", line 231, in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/varun/.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/home/varun/.local/share/uv/python/cpython-3.12.8-linux-x86_64-gnu/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+_______________ test_tc_fts_016_view_inbox_outbox_and_open_files _______________
+
+stub_iam = <function stub_iam.<locals>._install at 0x75d9fd5313a0>
+
+    def test_tc_fts_016_view_inbox_outbox_and_open_files(stub_iam):
+        """
+        Test ID: TC-FTS-016
+        Source ID: FTS-UC-005 Main Success Scenario
+        Purpose: Verify that an employee can view Inbox, Outbox, and open authorized files.
+        Preconditions: Employee is authenticated in an FTS role context. Files exist in Inbox/Outbox.
+        Action/Input: Open Inbox or Outbox. Select an authorized file.
+        Expected Result: FTS lists files correctly. FTS displays file contents, comments,
+                         attachments, status, and permitted actions.
+        Test Type: Positive
+        """
+        from modules.fts.selectors.file_queries import (
+            get_file_detail,
+            get_inbox_files,
+            get_outbox_files,
+        )
+    
+        _, user_a_id = _get_auth_client(stub_iam)
+        user_b_id = uuid.uuid4()
+    
+        # User A sends file to B
+        file_obj = create_file_service(
+            actor_id=str(user_a_id),
+            initial_comment="UC-005 visibility comment",
+            attachment_urls=["https://documents.fusion.edu/uc005.pdf"],
+        )
+        forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "UC-005 forward")
+    
+        # Verify B's inbox lists the file
+>       inbox_b = get_inbox_files(actor_id=str(user_b_id))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/a8/uc/test_uc_use_cases.py:563: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/fts/selectors/file_queries.py:7: in get_inbox_files
+    return FtsFile.objects.filter(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1495: in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1513: in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1523: in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1648: in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1680: in _add_q
+    child_clause, needed_inner = self.build_filter(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1505: in build_filter
+    return self._add_q(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1680: in _add_q
+    child_clause, needed_inner = self.build_filter(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1528: in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1335: in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.db.models.sql.query.Query object at 0x75d9fda33f50>
+names = ['ftsfilemovement', 'receiver_id'], opts = <Options for FtsFile>
+allow_many = True, fail_on_missing = False
+
+    def names_to_path(self, names, opts, allow_many=True, fail_on_missing=False):
+        """
+        Walk the list of names and turns them into PathInfo tuples. A single
+        name in 'names' can generate multiple PathInfos (m2m, for example).
+    
+        'names' is the path of names to travel, 'opts' is the model Options we
+        start the name resolving from, 'allow_many' is as for setup_joins().
+        If fail_on_missing is set to True, then a name that can't be resolved
+        will generate a FieldError.
+    
+        Return a list of PathInfo tuples. In addition return the final field
+        (the last used join field) and target (which is a field guaranteed to
+        contain the same value as the final field). Finally, return those names
+        that weren't found (which are likely transforms and the final lookup).
+        """
+        path, names_with_path = [], []
+        for pos, name in enumerate(names):
+            cur_names_with_path = (name, [])
+            if name == "pk" and opts is not None:
+                name = opts.pk.name
+    
+            field = None
+            filtered_relation = None
+            try:
+                if opts is None:
+                    raise FieldDoesNotExist
+                field = opts.get_field(name)
+            except FieldDoesNotExist:
+                if name in self.annotation_select:
+                    field = self.annotation_select[name].output_field
+                elif name in self._filtered_relations and pos == 0:
+                    filtered_relation = self._filtered_relations[name]
+                    if LOOKUP_SEP in filtered_relation.relation_name:
+                        parts = filtered_relation.relation_name.split(LOOKUP_SEP)
+                        filtered_relation_path, field, _, _ = self.names_to_path(
+                            parts,
+                            opts,
+                            allow_many,
+                            fail_on_missing,
+                        )
+                        path.extend(filtered_relation_path[:-1])
+                    else:
+                        field = opts.get_field(filtered_relation.relation_name)
+            if field is not None:
+                # Fields that contain one-to-many relations with a generic
+                # model (like a GenericForeignKey) cannot generate reverse
+                # relations and therefore cannot be used for reverse querying.
+                if field.is_relation and not field.related_model:
+                    raise FieldError(
+                        "Field %r does not generate an automatic reverse "
+                        "relation and therefore cannot be used for reverse "
+                        "querying. If it is a GenericForeignKey, consider "
+                        "adding a GenericRelation." % name
+                    )
+                try:
+                    model = field.model._meta.concrete_model
+                except AttributeError:
+                    # QuerySet.annotate() may introduce fields that aren't
+                    # attached to a model.
+                    model = None
+            else:
+                # We didn't find the current field, so move position back
+                # one step.
+                pos -= 1
+                if pos == -1 or fail_on_missing:
+                    available = sorted(
+                        [
+                            *get_field_names_from_opts(opts),
+                            *self.annotation_select,
+                            *self._filtered_relations,
+                        ]
+                    )
+>                   raise FieldError(
+                        "Cannot resolve keyword '%s' into field. "
+                        "Choices are: %s" % (name, ", ".join(available))
+                    )
+E                   django.core.exceptions.FieldError: Cannot resolve keyword 'ftsfilemovement' into field. Choices are: created_at, current_holder_id, id, owner_id, status, updated_at
+
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1813: FieldError
+________________ test_tc_fts_019_view_complete_tracking_history ________________
+
+stub_iam = <function stub_iam.<locals>._install at 0x75d9fe0a5b20>
+
+    def test_tc_fts_019_view_complete_tracking_history(stub_iam):
+        """
+        Test ID: TC-FTS-019
+        Source ID: FTS-UC-006 Main Success Scenario
+        Purpose: Verify that an authorized employee can view the complete chronological tracking
+                 history of a file.
+        Preconditions: File exists. Employee is authorized/associated with the file.
+        Action/Input: Select View History for the file.
+        Expected Result: FTS displays chronological history including sender, receiver, timestamp,
+                         comments, and attachments for all movements.
+        Test Type: Positive
+        """
+        from modules.fts.selectors.file_queries import get_file_history
+    
+        _, user_a_id = _get_auth_client(stub_iam)
+        user_b_id = uuid.uuid4()
+    
+        file_obj = create_file_service(str(user_a_id), "UC-006 history test")
+        forward_file_service(str(user_a_id), str(file_obj.id), str(user_b_id), "UC-006 forward")
+    
+        # View history as authorized user (A is associated as sender/owner)
+>       history = get_file_history(actor_id=str(user_a_id), file_id=str(file_obj.id))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/a8/uc/test_uc_use_cases.py:657: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/fts/selectors/file_queries.py:43: in get_file_history
+    get_file_detail(actor_id, file_id)  # Verify user is authorized to view the file
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+modules/fts/selectors/file_queries.py:21: in get_file_detail
+    file = FtsFile.objects.filter(
+.venv/lib/python3.12/site-packages/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1495: in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1513: in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+.venv/lib/python3.12/site-packages/django/db/models/query.py:1523: in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1648: in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1680: in _add_q
+    child_clause, needed_inner = self.build_filter(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1505: in build_filter
+    return self._add_q(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1680: in _add_q
+    child_clause, needed_inner = self.build_filter(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1505: in build_filter
+    return self._add_q(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1680: in _add_q
+    child_clause, needed_inner = self.build_filter(
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1528: in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1335: in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.db.models.sql.query.Query object at 0x75d9fda31a00>
+names = ['ftsfilemovement', 'sender_id'], opts = <Options for FtsFile>
+allow_many = True, fail_on_missing = False
+
+    def names_to_path(self, names, opts, allow_many=True, fail_on_missing=False):
+        """
+        Walk the list of names and turns them into PathInfo tuples. A single
+        name in 'names' can generate multiple PathInfos (m2m, for example).
+    
+        'names' is the path of names to travel, 'opts' is the model Options we
+        start the name resolving from, 'allow_many' is as for setup_joins().
+        If fail_on_missing is set to True, then a name that can't be resolved
+        will generate a FieldError.
+    
+        Return a list of PathInfo tuples. In addition return the final field
+        (the last used join field) and target (which is a field guaranteed to
+        contain the same value as the final field). Finally, return those names
+        that weren't found (which are likely transforms and the final lookup).
+        """
+        path, names_with_path = [], []
+        for pos, name in enumerate(names):
+            cur_names_with_path = (name, [])
+            if name == "pk" and opts is not None:
+                name = opts.pk.name
+    
+            field = None
+            filtered_relation = None
+            try:
+                if opts is None:
+                    raise FieldDoesNotExist
+                field = opts.get_field(name)
+            except FieldDoesNotExist:
+                if name in self.annotation_select:
+                    field = self.annotation_select[name].output_field
+                elif name in self._filtered_relations and pos == 0:
+                    filtered_relation = self._filtered_relations[name]
+                    if LOOKUP_SEP in filtered_relation.relation_name:
+                        parts = filtered_relation.relation_name.split(LOOKUP_SEP)
+                        filtered_relation_path, field, _, _ = self.names_to_path(
+                            parts,
+                            opts,
+                            allow_many,
+                            fail_on_missing,
+                        )
+                        path.extend(filtered_relation_path[:-1])
+                    else:
+                        field = opts.get_field(filtered_relation.relation_name)
+            if field is not None:
+                # Fields that contain one-to-many relations with a generic
+                # model (like a GenericForeignKey) cannot generate reverse
+                # relations and therefore cannot be used for reverse querying.
+                if field.is_relation and not field.related_model:
+                    raise FieldError(
+                        "Field %r does not generate an automatic reverse "
+                        "relation and therefore cannot be used for reverse "
+                        "querying. If it is a GenericForeignKey, consider "
+                        "adding a GenericRelation." % name
+                    )
+                try:
+                    model = field.model._meta.concrete_model
+                except AttributeError:
+                    # QuerySet.annotate() may introduce fields that aren't
+                    # attached to a model.
+                    model = None
+            else:
+                # We didn't find the current field, so move position back
+                # one step.
+                pos -= 1
+                if pos == -1 or fail_on_missing:
+                    available = sorted(
+                        [
+                            *get_field_names_from_opts(opts),
+                            *self.annotation_select,
+                            *self._filtered_relations,
+                        ]
+                    )
+>                   raise FieldError(
+                        "Cannot resolve keyword '%s' into field. "
+                        "Choices are: %s" % (name, ", ".join(available))
+                    )
+E                   django.core.exceptions.FieldError: Cannot resolve keyword 'ftsfilemovement' into field. Choices are: created_at, current_holder_id, id, owner_id, status, updated_at
+
+.venv/lib/python3.12/site-packages/django/db/models/sql/query.py:1813: FieldError
 ================================ tests coverage ================================
 _______________ coverage: platform linux, python 3.12.8-final-0 ________________
 
@@ -8,16 +685,21 @@ modules/fts/api/serializers.py                                               107
 modules/fts/api/urls.py                                                        4      0      0      0   100%
 modules/fts/api/views.py                                                      78     10     10      1    85%   47-54, 118, 141
 modules/fts/apps.py                                                            4      0      0      0   100%
-modules/fts/domain/commands.py                                                43     11     22      5    69%   14, 39, 69, 91-99, 113, 115
+modules/fts/domain/commands.py                                                43      7     22      7    78%   14, 39, 69, 92, 95, 113, 115
 modules/fts/domain/states.py                                                   6      0      0      0   100%
 modules/fts/migrations/0001_initial.py                                         6      0      0      0   100%
 modules/fts/migrations/0002_ftsfilemovement_ftsfile_current_holder_id.py       5      0      0      0   100%
 modules/fts/migrations/__init__.py                                             0      0      0      0   100%
 modules/fts/models.py                                                         47      5      0      0    89%   24, 36, 47, 59, 77
+modules/fts/selectors/file_queries.py                                         18      7      2      0    55%   14, 29-31, 35, 39, 44
 modules/fts/services/file_archival.py                                         17      2      2      0    89%   11-12
 modules/fts/services/file_creation.py                                         43      4     12      1    91%   65-66, 83->92, 109-110
-modules/fts/services/file_movement.py                                         48     21     22      5    51%   23, 26-27, 30, 92, 97-156
+modules/fts/services/file_movement.py                                         48      9     22      6    73%   23, 26-27, 30, 92, 98, 140-141, 156
 ----------------------------------------------------------------------------------------------------------------------
-TOTAL                                                                        408     77     76     15    78%
+TOTAL                                                                        426     68     78     18    81%
 Coverage XML written to file a8_results/uc/coverage.xml
-18 passed, 12 skipped in 3.17s
+=========================== short test summary info ============================
+FAILED tests/a8/uc/test_uc_use_cases.py::test_tc_fts_013_return_file_to_sender
+FAILED tests/a8/uc/test_uc_use_cases.py::test_tc_fts_016_view_inbox_outbox_and_open_files
+FAILED tests/a8/uc/test_uc_use_cases.py::test_tc_fts_019_view_complete_tracking_history
+3 failed, 20 passed, 7 skipped in 4.16s
