@@ -1,0 +1,238 @@
+[
+  {
+    "test_id": "TC-BR001-01",
+    "source_id": "BR-FTS-001",
+    "purpose": "Verify that only Institute Employees can perform operational file actions, and System Admins are restricted from routine file processing.",
+    "preconditions": [
+      "User A is logged in as System Admin.",
+      "User B is logged in as Institute Employee (Faculty)."
+    ],
+    "action_or_input": [
+      "User A attempts to create a new file.",
+      "User B attempts to create a new file with a valid comment."
+    ],
+    "expected_result": [
+      "User A's request is denied or the create option is unavailable.",
+      "User B successfully creates the file."
+    ],
+    "test_type": "Authorization"
+  },
+  {
+    "test_id": "TC-BR002-01",
+    "source_id": "BR-FTS-002",
+    "purpose": "Verify that switching role context does not alter file ownership or audit history.",
+    "preconditions": [
+      "User A is an Institute Employee with two roles: Role X and Role Y.",
+      "User A creates File F while acting as Role X."
+    ],
+    "action_or_input": [
+      "User A switches context to Role Y.",
+      "User A views File F details and audit log."
+    ],
+    "expected_result": [
+      "File F owner remains User A (associated with Role X creation context).",
+      "Audit log shows creation by User A under Role X, unchanged by the switch."
+    ],
+    "test_type": "Constraint"
+  },
+  {
+    "test_id": "TC-BR003-01",
+    "source_id": "BR-FTS-003",
+    "purpose": "Verify that circulated files persist with all comments and attachments, and cannot be deleted like drafts.",
+    "preconditions": [
+      "User A creates File F with Comment C1 and Attachment A1.",
+      "User A forwards File F to User B with Comment C2."
+    ],
+    "action_or_input": [
+      "User A attempts to delete File F.",
+      "User B views File F."
+    ],
+    "expected_result": [
+      "Deletion is blocked or not permitted for circulated files.",
+      "User B sees File F containing C1, A1, and movement record with C2."
+    ],
+    "test_type": "Data/Lifecycle Constraint"
+  },
+  {
+    "test_id": "TC-BR004-01",
+    "source_id": "BR-FTS-004",
+    "purpose": "Verify that file creation is blocked without an initial mandatory comment.",
+    "preconditions": [
+      "User A is logged in as Institute Employee."
+    ],
+    "action_or_input": [
+      "User A attempts to save/create a new file with an empty comment field."
+    ],
+    "expected_result": [
+      "System rejects the creation request with a validation error indicating missing comment."
+    ],
+    "test_type": "Validation"
+  },
+  {
+    "test_id": "TC-BR005-01",
+    "source_id": "BR-FTS-005",
+    "purpose": "Verify that draft operations (edit/discard) are allowed before submission but prohibited after circulation.",
+    "preconditions": [
+      "User A creates Draft D1.",
+      "User A submits/forwards Draft D1 to User B."
+    ],
+    "action_or_input": [
+      "User A attempts to discard Draft D1 after submission."
+    ],
+    "expected_result": [
+      "Discard action is blocked because the file is no longer in draft state."
+    ],
+    "test_type": "Lifecycle Constraint"
+  },
+  {
+    "test_id": "TC-BR006-01",
+    "source_id": "BR-FTS-006",
+    "purpose": "Verify that forwarding a file is blocked without a mandatory movement comment.",
+    "preconditions": [
+      "User A has received File F.",
+      "User B is a valid recipient."
+    ],
+    "action_or_input": [
+      "User A attempts to forward File F to User B with an empty comment field."
+    ],
+    "expected_result": [
+      "System rejects the forward request with a validation error indicating missing comment."
+    ],
+    "test_type": "Validation"
+  },
+  {
+    "test_id": "TC-BR007-01",
+    "source_id": "BR-FTS-007",
+    "purpose": "Verify that a file can be returned to the sender by the current holder.",
+    "preconditions": [
+      "User A forwarded File F to User B.",
+      "User B has received File F."
+    ],
+    "action_or_input": [
+      "User B selects 'Return' on File F with a mandatory comment."
+    ],
+    "expected_result": [
+      "File F is returned to User A's Inbox.",
+      "A movement record is created indicating return from User B to User A."
+    ],
+    "test_type": "Eligibility/Routing"
+  },
+  {
+    "test_id": "TC-BR008-01",
+    "source_id": "BR-FTS-008",
+    "purpose": "Verify that forwarding events are recorded chronologically with all required details.",
+    "preconditions": [
+      "File F exists.",
+      "User A forwards File F to User B with Comment C and Attachment Att."
+    ],
+    "action_or_input": [
+      "View the movement history of File F."
+    ],
+    "expected_result": [
+      "History contains a record with Sender=User A, Receiver=User B, Timestamp=Now, Comment=C, Attachment=Att.",
+      "Records are ordered chronologically."
+    ],
+    "test_type": "Audit/Record Constraint"
+  },
+  {
+    "test_id": "TC-BR009-01",
+    "source_id": "BR-FTS-009",
+    "purpose": "Verify that unauthorized users cannot access files they are not associated with.",
+    "preconditions": [
+      "User A owns File F.",
+      "User B is an Institute Employee not associated with File F."
+    ],
+    "action_or_input": [
+      "User B attempts to view File F via direct ID access or search."
+    ],
+    "expected_result": [
+      "Access is denied; File F is not visible in User B's Inbox/Outbox or search results."
+    ],
+    "test_type": "Authorization"
+  },
+  {
+    "test_id": "TC-BR010-01",
+    "source_id": "BR-FTS-010",
+    "purpose": "Verify that sensitive actions are restricted based on RBAC and file state.",
+    "preconditions": [
+      "File F is archived.",
+      "User A is the owner of File F."
+    ],
+    "action_or_input": [
+      "User A attempts to forward File F."
+    ],
+    "expected_result": [
+      "Forward action is blocked because the file is in archived state."
+    ],
+    "test_type": "Authorization"
+  },
+  {
+    "test_id": "TC-BR011-01",
+    "source_id": "BR-FTS-011",
+    "purpose": "Verify that audit logs are maintained for creation, comments, attachments, and archival without rewriting history.",
+    "preconditions": [
+      "File F exists.",
+      "User A adds a comment to File F.",
+      "User A archives File F."
+    ],
+    "action_or_input": [
+      "Retrieve the audit log for File F."
+    ],
+    "expected_result": [
+      "Log contains entries for creation, comment addition, and archival.",
+      "Previous entries remain unchanged and ordered chronologically."
+    ],
+    "test_type": "Audit/Lifecycle"
+  },
+  {
+    "test_id": "TC-BR012-01",
+    "source_id": "BR-FTS-012",
+    "purpose": "Verify that only the file owner can archive a file, and archived files become read-only.",
+    "preconditions": [
+      "User A owns File F.",
+      "User B is a participant in File F but not the owner."
+    ],
+    "action_or_input": [
+      "User B attempts to archive File F.",
+      "User A archives File F.",
+      "User A attempts to add a comment to archived File F."
+    ],
+    "expected_result": [
+      "User B's archive request is denied.",
+      "User A successfully archives File F.",
+      "Comment addition to archived File F is denied."
+    ],
+    "test_type": "Lifecycle/Authorization"
+  },
+  {
+    "test_id": "TC-BR013-01",
+    "source_id": "BR-FTS-013",
+    "purpose": "Verify that notifications are triggered for file receipt, forwarding, return, and archival.",
+    "preconditions": [
+      "User A forwards File F to User B."
+    ],
+    "action_or_input": [
+      "Check notification service/logs for User B."
+    ],
+    "expected_result": [
+      "A notification event for 'File Received' is generated for User B."
+    ],
+    "test_type": "Trigger/Scope Boundary"
+  },
+  {
+    "test_id": "TC-BR014-01",
+    "source_id": "BR-FTS-014",
+    "purpose": "Verify that FTS APIs enforce RBAC when accessed by other Fusion modules.",
+    "preconditions": [
+      "External Module M invokes FTS API to forward File F.",
+      "The user context associated with Module M does not have permission to forward File F."
+    ],
+    "action_or_input": [
+      "Module M calls the FTS forward API for File F."
+    ],
+    "expected_result": [
+      "FTS API returns an authorization error, denying the forward action."
+    ],
+    "test_type": "Scope/Integration Constraint"
+  }
+]

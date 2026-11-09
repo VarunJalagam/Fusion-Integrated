@@ -1,0 +1,541 @@
+[
+  {
+    "test_id": "TC-FTS-001",
+    "source_id": "FTS-UC-001 Main Success Scenario",
+    "purpose": "Verify successful creation of a new file with mandatory comment and optional attachment, saved as draft.",
+    "preconditions": [
+      "Employee is authenticated.",
+      "Employee has an assigned role context authorized to create files."
+    ],
+    "action_or_input": [
+      "Open file-creation function.",
+      "Enter initial mandatory comment.",
+      "Add optional attachment.",
+      "Save as draft."
+    ],
+    "expected_result": [
+      "File exists in draft/pre-circulation state.",
+      "Initial comment and attachment are preserved.",
+      "Creation audit information is recorded."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-002",
+    "source_id": "FTS-UC-001 Exception Flow 1",
+    "purpose": "Verify that file creation is blocked if the initial mandatory comment is missing.",
+    "preconditions": [
+      "Employee is authenticated.",
+      "Employee has an assigned role context authorized to create files."
+    ],
+    "action_or_input": [
+      "Open file-creation function.",
+      "Leave comment field empty.",
+      "Attempt to save."
+    ],
+    "expected_result": [
+      "FTS does not accept creation/save.",
+      "No file record is created."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-003",
+    "source_id": "FTS-UC-001 Exception Flow 2",
+    "purpose": "Verify that file creation is denied if the selected role is not authorized.",
+    "preconditions": [
+      "Employee is authenticated.",
+      "Employee selects a role context not authorized to create files."
+    ],
+    "action_or_input": [
+      "Enter initial mandatory comment.",
+      "Attempt to save."
+    ],
+    "expected_result": [
+      "FTS denies the action.",
+      "No file record is created."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-004",
+    "source_id": "FTS-UC-001 Alternative Flow 1",
+    "purpose": "Verify that a valid created file can proceed immediately to circulation via FTS-UC-003.",
+    "preconditions": [
+      "Employee is authenticated and authorized.",
+      "Valid recipient employee exists."
+    ],
+    "action_or_input": [
+      "Create file with mandatory comment.",
+      "Select immediate circulation option.",
+      "Select recipient.",
+      "Enter movement comment.",
+      "Confirm Send."
+    ],
+    "expected_result": [
+      "File is circulated to recipient.",
+      "File state is updated from draft to active/circulated.",
+      "Movement history and audit records are updated."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-005",
+    "source_id": "FTS-UC-002 Main Success Scenario",
+    "purpose": "Verify successful editing of a draft file.",
+    "preconditions": [
+      "Draft file exists.",
+      "Employee is authorized to edit the draft."
+    ],
+    "action_or_input": [
+      "Open existing draft.",
+      "Edit comment and/or attachments.",
+      "Save updated draft."
+    ],
+    "expected_result": [
+      "Draft is updated with new content.",
+      "Audit/version information is recorded."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-006",
+    "source_id": "FTS-UC-002 Alternative Flow 1",
+    "purpose": "Verify successful discarding of a draft file before submission.",
+    "preconditions": [
+      "Draft file exists.",
+      "Employee is authorized to discard the draft."
+    ],
+    "action_or_input": [
+      "Open existing draft.",
+      "Select Discard option."
+    ],
+    "expected_result": [
+      "Draft is removed from the system.",
+      "No circulated file is created."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-007",
+    "source_id": "FTS-UC-002 Exception Flow 1",
+    "purpose": "Verify that discarding a file is blocked if it has already been submitted/circulated.",
+    "preconditions": [
+      "File exists in submitted/circulated state.",
+      "Employee attempts to discard the file."
+    ],
+    "action_or_input": [
+      "Select Discard option on circulated file."
+    ],
+    "expected_result": [
+      "FTS does not permit discard.",
+      "File remains unchanged."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-008",
+    "source_id": "FTS-UC-002 Exception Flow 2",
+    "purpose": "Verify that editing/discarding is denied if the employee is not authorized for the draft.",
+    "preconditions": [
+      "Draft file exists owned by another user.",
+      "Employee is not authorized to edit/discard this draft."
+    ],
+    "action_or_input": [
+      "Attempt to open or modify the draft."
+    ],
+    "expected_result": [
+      "FTS denies access/action.",
+      "File remains unchanged."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-009",
+    "source_id": "FTS-UC-003 Main Success Scenario",
+    "purpose": "Verify successful sending/forwarding of an active file to a recipient.",
+    "preconditions": [
+      "Active file exists.",
+      "Sender is authorized.",
+      "Valid recipient Institute Employee exists."
+    ],
+    "action_or_input": [
+      "Select Send/Forward on actionable file.",
+      "Select recipient.",
+      "Enter mandatory movement comment.",
+      "Optionally add attachment.",
+      "Confirm Send/Forward."
+    ],
+    "expected_result": [
+      "File holder is updated to recipient.",
+      "Movement history, audit, and version info are recorded.",
+      "Notification event (file-forwarded/file-received) is triggered."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-010",
+    "source_id": "FTS-UC-003 Exception Flow 1",
+    "purpose": "Verify that forwarding is blocked if the mandatory movement comment is missing.",
+    "preconditions": [
+      "Active file exists.",
+      "Sender is authorized."
+    ],
+    "action_or_input": [
+      "Select Send/Forward.",
+      "Leave movement comment empty.",
+      "Attempt to confirm."
+    ],
+    "expected_result": [
+      "Forwarding is blocked.",
+      "File state remains unchanged."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-011",
+    "source_id": "FTS-UC-003 Exception Flow 2",
+    "purpose": "Verify that forwarding is blocked if the recipient is invalid.",
+    "preconditions": [
+      "Active file exists.",
+      "Sender is authorized."
+    ],
+    "action_or_input": [
+      "Select Send/Forward.",
+      "Select invalid/non-existent recipient.",
+      "Attempt to confirm."
+    ],
+    "expected_result": [
+      "Forwarding is blocked.",
+      "File state remains unchanged."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-012",
+    "source_id": "FTS-UC-003 Exception Flow 3",
+    "purpose": "Verify that forwarding is blocked for unauthorized actions or archived files.",
+    "preconditions": [
+      "File is archived OR sender is not authorized."
+    ],
+    "action_or_input": [
+      "Attempt to Send/Forward the file."
+    ],
+    "expected_result": [
+      "Forwarding is blocked.",
+      "File state remains unchanged."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-013",
+    "source_id": "FTS-UC-004 Main Success Scenario",
+    "purpose": "Verify successful return of a received file to its sender.",
+    "preconditions": [
+      "File is active and associated with the recipient.",
+      "Recipient is authorized to return it.",
+      "Known sender exists for current movement."
+    ],
+    "action_or_input": [
+      "Select Return on received file.",
+      "Enter mandatory movement comment.",
+      "Optionally add attachment.",
+      "Confirm Return."
+    ],
+    "expected_result": [
+      "File holder is updated to previous sender.",
+      "Return movement is recorded chronologically.",
+      "Audit/version info is recorded.",
+      "File-returned notification event is triggered."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-014",
+    "source_id": "FTS-UC-004 Exception Flow 1",
+    "purpose": "Verify that return is blocked if the mandatory movement comment is missing.",
+    "preconditions": [
+      "File is active and associated with the recipient."
+    ],
+    "action_or_input": [
+      "Select Return.",
+      "Leave movement comment empty.",
+      "Attempt to confirm."
+    ],
+    "expected_result": [
+      "Return is blocked.",
+      "File state remains unchanged."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-015",
+    "source_id": "FTS-UC-004 Exception Flow 2",
+    "purpose": "Verify that return is blocked for unauthorized actions or archived/completed files.",
+    "preconditions": [
+      "File is archived OR recipient is not authorized."
+    ],
+    "action_or_input": [
+      "Attempt to Return the file."
+    ],
+    "expected_result": [
+      "Return is blocked.",
+      "File state remains unchanged."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-016",
+    "source_id": "FTS-UC-005 Main Success Scenario",
+    "purpose": "Verify that an employee can view Inbox, Outbox, and open authorized files.",
+    "preconditions": [
+      "Employee is authenticated in an FTS role context.",
+      "Files exist in Inbox/Outbox."
+    ],
+    "action_or_input": [
+      "Open Inbox or Outbox.",
+      "Select an authorized file."
+    ],
+    "expected_result": [
+      "FTS lists files correctly.",
+      "FTS displays file contents, comments, attachments, status, and permitted actions."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-017",
+    "source_id": "FTS-UC-005 Exception Flow 1",
+    "purpose": "Verify that unauthorized files are not exposed or opened.",
+    "preconditions": [
+      "Employee is authenticated.",
+      "File exists but employee is not authorized to view it."
+    ],
+    "action_or_input": [
+      "Attempt to view or open the unauthorized file."
+    ],
+    "expected_result": [
+      "FTS does not expose/open the file."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-018",
+    "source_id": "FTS-UC-005 Exception Flow 2",
+    "purpose": "Verify that unauthorized actions are unavailable or denied based on file state/role.",
+    "preconditions": [
+      "Employee is viewing an authorized file.",
+      "Action is not authorized for current state/role."
+    ],
+    "action_or_input": [
+      "Attempt to perform unauthorized action."
+    ],
+    "expected_result": [
+      "Action is unavailable or denied."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-019",
+    "source_id": "FTS-UC-006 Main Success Scenario",
+    "purpose": "Verify that an authorized employee can view the complete chronological tracking history of a file.",
+    "preconditions": [
+      "File exists.",
+      "Employee is authorized/associated with the file."
+    ],
+    "action_or_input": [
+      "Select View History for the file."
+    ],
+    "expected_result": [
+      "FTS displays chronological history including sender, receiver, timestamp, comments, and attachments for all movements."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-020",
+    "source_id": "FTS-UC-006 Exception Flow 1",
+    "purpose": "Verify that history access is denied if the employee is not authorized/associated with the file.",
+    "preconditions": [
+      "File exists.",
+      "Employee is not authorized/associated with the file."
+    ],
+    "action_or_input": [
+      "Attempt to view history."
+    ],
+    "expected_result": [
+      "FTS denies history access."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-021",
+    "source_id": "FTS-UC-007 Main Success Scenario",
+    "purpose": "Verify that the file owner can successfully archive a completed circulated file.",
+    "preconditions": [
+      "File has been circulated.",
+      "File is not already archived.",
+      "Actor is the file owner."
+    ],
+    "action_or_input": [
+      "Open active circulated file.",
+      "Select Archive."
+    ],
+    "expected_result": [
+      "File state changes to Archived / Read-only.",
+      "Subsequent modification and forwarding are prevented.",
+      "Archival audit/event is recorded.",
+      "File-archived notification event is triggered."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-022",
+    "source_id": "FTS-UC-007 Alternative Flow 1",
+    "purpose": "Verify that selecting Archive on an already archived file presents read-only state without new transition.",
+    "preconditions": [
+      "File is already archived."
+    ],
+    "action_or_input": [
+      "Select Archive."
+    ],
+    "expected_result": [
+      "FTS presents existing read-only state.",
+      "No new archival transition occurs."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-023",
+    "source_id": "FTS-UC-007 Exception Flow 1",
+    "purpose": "Verify that archival is denied if the actor is not the file owner.",
+    "preconditions": [
+      "File is active.",
+      "Actor is not the file owner."
+    ],
+    "action_or_input": [
+      "Attempt to Archive the file."
+    ],
+    "expected_result": [
+      "Archival attempt is denied.",
+      "File remains active."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-024",
+    "source_id": "FTS-UC-008 Main Success Scenario",
+    "purpose": "Verify that an employee can select an assigned role context and use FTS under that role.",
+    "preconditions": [
+      "Employee has at least one assigned role.",
+      "Multiple roles are assigned."
+    ],
+    "action_or_input": [
+      "Select an assigned role context in Fusion dashboard."
+    ],
+    "expected_result": [
+      "FTS applies selected role context for authorization.",
+      "Existing file ownership and audit history are preserved."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-025",
+    "source_id": "FTS-UC-008 Exception Flow 1",
+    "purpose": "Verify that sensitive actions are denied if the selected role does not authorize them.",
+    "preconditions": [
+      "Employee has selected a role context.",
+      "Role does not authorize a specific sensitive action."
+    ],
+    "action_or_input": [
+      "Attempt to perform the sensitive action."
+    ],
+    "expected_result": [
+      "FTS denies the action."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-026",
+    "source_id": "FTS-UC-009 Main Success Scenario",
+    "purpose": "Verify that System Admin can administer FTS user access context and governance oversight.",
+    "preconditions": [
+      "System Admin has applicable administrative privileges."
+    ],
+    "action_or_input": [
+      "Assign/reassign FTS-relevant role.",
+      "Review FTS usage/security/audit information."
+    ],
+    "expected_result": [
+      "FTS consumes/records role/access context.",
+      "Notification event triggered for relevant role assignment.",
+      "System Admin does not perform operational file actions."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-027",
+    "source_id": "FTS-UC-009 Exception Flow 1",
+    "purpose": "Verify that System Admin is denied operational file workflow actions.",
+    "preconditions": [
+      "System Admin is logged in."
+    ],
+    "action_or_input": [
+      "Attempt to create, forward, return, or archive an operational file."
+    ],
+    "expected_result": [
+      "FTS denies the operational action.",
+      "File state remains unchanged."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-028",
+    "source_id": "FTS-UC-010 Main Success Scenario",
+    "purpose": "Verify that an authorized consuming Fusion module can successfully invoke FTS APIs.",
+    "preconditions": [
+      "Integration is authorized.",
+      "Required access/context is provided."
+    ],
+    "action_or_input": [
+      "Consuming module calls an FTS API for workflow support."
+    ],
+    "expected_result": [
+      "FTS validates authorization.",
+      "FTS performs supported service.",
+      "Audit information is recorded.",
+      "Service response is returned."
+    ],
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-029",
+    "source_id": "FTS-UC-010 Exception Flow 1",
+    "purpose": "Verify that unauthorized integration requests are rejected.",
+    "preconditions": [
+      "Integration is not authorized."
+    ],
+    "action_or_input": [
+      "Attempt to call FTS API."
+    ],
+    "expected_result": [
+      "Request is rejected.",
+      "No FTS action is performed."
+    ],
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-030",
+    "source_id": "FTS-UC-010 Exception Flow 2",
+    "purpose": "Verify that FTS rejects requests to define domain-specific approval policy for consuming modules.",
+    "preconditions": [
+      "Authorized consuming module invokes FTS API."
+    ],
+    "action_or_input": [
+      "Request FTS to define/approve domain-specific policy."
+    ],
+    "expected_result": [
+      "Request is outside FTS scope and rejected/handled as error.",
+      "FTS does not invent or own consuming-module approval rules."
+    ],
+    "test_type": "Negative"
+  }
+]

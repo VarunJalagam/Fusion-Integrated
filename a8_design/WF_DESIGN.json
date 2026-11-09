@@ -1,0 +1,137 @@
+[
+  {
+    "test_id": "TC-FTS-001",
+    "source_id": "BW-FTS-05, FTS-UC-001, BR-FTS-003",
+    "purpose": "Verify creation of a new file with mandatory comment and no draft edit, resulting in Draft state.",
+    "preconditions": "User is an authorized Institute Employee with an assigned role. No existing file record for the intended file.",
+    "action_or_input": "Create new file with initial mandatory comment. Do not add attachments. Save as draft.",
+    "expected_result": "File is created in 'Draft / Pre-circulation' state. Audit log records creation.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-002",
+    "source_id": "BW-FTS-05, FTS-UC-003, BR-FTS-006, BR-FTS-013",
+    "purpose": "Verify circulation of a new file without draft edit (Zero Draft-Edit Traversal).",
+    "preconditions": "File exists in 'Draft / Pre-circulation' state. User is the creator/sender. Recipient is a valid Institute Employee.",
+    "action_or_input": "Send/Forward file to recipient with mandatory movement comment.",
+    "expected_result": "File state changes to 'Active / Circulated'. File appears in Recipient's Inbox and Sender's Outbox. Notification triggered. Movement history updated.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-003",
+    "source_id": "BW-FTS-06, FTS-UC-002, BR-FTS-003",
+    "purpose": "Verify editing a draft file once (One Draft-Edit Traversal).",
+    "preconditions": "File exists in 'Draft / Pre-circulation' state. User is the creator.",
+    "action_or_input": "Edit the draft file (e.g., update comment or add attachment). Save changes.",
+    "expected_result": "File remains in 'Updated Draft / Pre-circulation' state. Changes are persisted.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-004",
+    "source_id": "BW-FTS-06, FTS-UC-003, BR-FTS-006",
+    "purpose": "Verify circulation of a file after one draft edit.",
+    "preconditions": "File exists in 'Updated Draft / Pre-circulation' state. User is the sender. Recipient is valid.",
+    "action_or_input": "Send/Forward file to recipient with mandatory movement comment.",
+    "expected_result": "File state changes to 'Active / Circulated'. Notification triggered. History updated.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-005",
+    "source_id": "BW-FTS-07, FTS-UC-002, BR-FTS-005",
+    "purpose": "Verify discarding a newly created draft without editing (Zero Draft-Edit Traversal).",
+    "preconditions": "File exists in 'Draft / Pre-circulation' state. User is the creator.",
+    "action_or_input": "Select 'Discard' on the draft file.",
+    "expected_result": "File is discarded. No active file retained. Audit log records discard action.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-006",
+    "source_id": "BW-FTS-08, FTS-UC-002, BR-FTS-005",
+    "purpose": "Verify discarding a draft after one edit (One Draft-Edit Traversal).",
+    "preconditions": "File exists in 'Updated Draft / Pre-circulation' state. User is the creator.",
+    "action_or_input": "Select 'Discard' on the edited draft file.",
+    "expected_result": "File is discarded. No active file retained. Audit log records discard action.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-007",
+    "source_id": "BW-FTS-01, FTS-UC-003, BR-FTS-001, BR-FTS-006",
+    "purpose": "Verify forwarding an active circulated file to a new recipient (Zero Onward Traversal context).",
+    "preconditions": "File is in 'Active / Circulated' state. User is the current holder. Recipient is valid and different from previous sender.",
+    "action_or_input": "Forward file to new recipient with mandatory movement comment.",
+    "expected_result": "File held by new recipient. Previous holder no longer has active control. History and audit updated. Notification sent.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-008",
+    "source_id": "BW-FTS-02, FTS-UC-003, BR-FTS-006",
+    "purpose": "Verify onward forwarding of a received file (One Loop Traversal).",
+    "preconditions": "User has received an active circulated file. User is the current holder.",
+    "action_or_input": "Forward file to next recipient with mandatory movement comment.",
+    "expected_result": "File held by next recipient. History records onward movement. Notification sent.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-009",
+    "source_id": "BW-FTS-03, FTS-UC-004, BR-FTS-006, BR-FTS-013",
+    "purpose": "Verify returning an active circulated file to the previous sender.",
+    "preconditions": "User has received an active circulated file. Previous sender is known.",
+    "action_or_input": "Return file to previous sender with mandatory movement comment.",
+    "expected_result": "File held by previous sender. History records return action. Return notification triggered.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-010",
+    "source_id": "BW-FTS-04, FTS-UC-007, BR-FTS-009",
+    "purpose": "Verify archival of a completed circulated file by the owner.",
+    "preconditions": "File is in 'Active / Circulated' state. User is the file owner. Collaborative objective is complete.",
+    "action_or_input": "Select 'Archive' on the file.",
+    "expected_result": "File state changes to 'Archived / Read-only'. File cannot be modified or forwarded. Archive notification triggered. Audit log updated.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-011",
+    "source_id": "BR-FTS-009, FTS-UC-007",
+    "purpose": "Verify that a non-owner cannot archive a file.",
+    "preconditions": "File is in 'Active / Circulated' state. User is an associated employee but NOT the file owner.",
+    "action_or_input": "Attempt to archive the file.",
+    "expected_result": "Action is denied. Error message indicates lack of permission/ownership.",
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-012",
+    "source_id": "BR-FTS-009, FTS-UC-007",
+    "purpose": "Verify that an already archived file cannot be archived again or modified.",
+    "preconditions": "File is in 'Archived' state.",
+    "action_or_input": "Attempt to archive, forward, or edit the file.",
+    "expected_result": "All actions are denied. File remains read-only.",
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-013",
+    "source_id": "BR-FTS-006, FTS-UC-003",
+    "purpose": "Verify that forwarding a file fails without a mandatory movement comment.",
+    "preconditions": "File is in 'Draft' or 'Active' state. User is authorized sender.",
+    "action_or_input": "Attempt to forward file with empty movement comment.",
+    "expected_result": "Action is denied. Validation error requires mandatory comment.",
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-014",
+    "source_id": "BR-FTS-001, FTS-UC-001",
+    "purpose": "Verify that creating a file fails without a mandatory initial comment.",
+    "preconditions": "User is authorized Institute Employee.",
+    "action_or_input": "Attempt to create new file with empty initial comment.",
+    "expected_result": "Action is denied. Validation error requires mandatory initial comment.",
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-015",
+    "source_id": "BR-FTS-005, FTS-UC-002",
+    "purpose": "Verify that a circulated file cannot be discarded.",
+    "preconditions": "File is in 'Active / Circulated' state.",
+    "action_or_input": "Attempt to discard the file.",
+    "expected_result": "Action is denied. Discard is only allowed for pre-circulation drafts.",
+    "test_type": "Negative"
+  }
+]

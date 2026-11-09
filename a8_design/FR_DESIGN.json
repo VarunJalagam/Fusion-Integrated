@@ -1,0 +1,182 @@
+[
+  {
+    "test_id": "TC-FTS-001",
+    "source_id": "AFR-FTS-011, AFR-FTS-012, AFR-FTS-013",
+    "purpose": "Verify creation of a new file with mandatory comment and optional attachment",
+    "preconditions": "User is logged in as an Institute Employee with an assigned role.",
+    "action_or_input": "Initiate file creation, enter a comment, attach a file, and save as draft.",
+    "expected_result": "File is created in 'Draft' state with the comment and attachment associated.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-002",
+    "source_id": "AFR-FTS-012",
+    "purpose": "Verify that file creation fails without a mandatory comment",
+    "preconditions": "User is logged in as an Institute Employee with an assigned role.",
+    "action_or_input": "Initiate file creation, leave comment field empty, attempt to save.",
+    "expected_result": "System prevents saving and displays a validation error for missing comment.",
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-003",
+    "source_id": "AFR-FTS-014, AFR-FTS-015",
+    "purpose": "Verify editing a saved draft file",
+    "preconditions": "A draft file exists created by the logged-in user.",
+    "action_or_input": "Open the draft file, modify the comment or add an attachment, and save.",
+    "expected_result": "Draft file is updated with the new content.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-004",
+    "source_id": "AFR-FTS-016",
+    "purpose": "Verify discarding a draft file",
+    "preconditions": "A draft file exists created by the logged-in user.",
+    "action_or_input": "Select the draft file and choose the discard option.",
+    "expected_result": "The draft file is removed from the user's list and no longer accessible.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-005",
+    "source_id": "AFR-FTS-018, AFR-FTS-020, AFR-FTS-021, AFR-FTS-022, AFR-FTS-023",
+    "purpose": "Verify submitting a file to another employee with mandatory comment and optional attachment",
+    "preconditions": "A valid file (draft or new) exists. Another Institute Employee exists in the system.",
+    "action_or_input": "Submit the file to another employee, add a mandatory movement comment, optionally add an attachment.",
+    "expected_result": "File status changes to 'Circulated'. File appears in recipient's Inbox. Movement is recorded.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-006",
+    "source_id": "AFR-FTS-022",
+    "purpose": "Verify that forwarding/returning a file fails without a mandatory comment",
+    "preconditions": "User has a received file in their Inbox.",
+    "action_or_input": "Attempt to forward or return the file without adding a comment.",
+    "expected_result": "System prevents the action and displays a validation error.",
+    "test_type": "Negative"
+  },
+  {
+    "test_id": "TC-FTS-007",
+    "source_id": "AFR-FTS-024",
+    "purpose": "Verify forwarding a received file to a third party",
+    "preconditions": "User has a received file in their Inbox. A third Institute Employee exists.",
+    "action_or_input": "Open the file from Inbox, forward it to a third employee with a mandatory comment.",
+    "expected_result": "File moves to the third employee's Inbox. Original sender is notified if applicable. History updated.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-008",
+    "source_id": "AFR-FTS-025",
+    "purpose": "Verify returning a received file to the sender",
+    "preconditions": "User has a received file in their Inbox.",
+    "action_or_input": "Open the file from Inbox, select 'Return to Sender', add a mandatory comment.",
+    "expected_result": "File returns to the previous sender's Inbox. Movement history records the return.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-009",
+    "source_id": "AFR-FTS-029, AFR-FTS-030",
+    "purpose": "Verify Inbox and Outbox visibility",
+    "preconditions": "User has sent at least one file and received at least one file.",
+    "action_or_input": "Navigate to Inbox and Outbox views.",
+    "expected_result": "Inbox lists received files. Outbox lists sent files.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-010",
+    "source_id": "AFR-FTS-031, AFR-FTS-032",
+    "purpose": "Verify opening files from Inbox and Outbox",
+    "preconditions": "User has files in Inbox and Outbox.",
+    "action_or_input": "Click on a file in Inbox and a file in Outbox.",
+    "expected_result": "File details, comments, and attachments are displayed correctly for both.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-011",
+    "source_id": "AFR-FTS-035, AFR-FTS-036, AFR-FTS-037, AFR-FTS-038, AFR-FTS-039, AFR-FTS-040, AFR-FTS-041",
+    "purpose": "Verify complete chronological tracking history visibility",
+    "preconditions": "A file has undergone multiple movements (creation, forward, return).",
+    "action_or_input": "View the tracking history of the file as an associated user.",
+    "expected_result": "History displays all events chronologically with sender, receiver, timestamp, comments, and attachments.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-012",
+    "source_id": "AFR-FTS-042, AFR-FTS-043",
+    "purpose": "Verify only file owner can archive a file",
+    "preconditions": "File is in 'Circulated' state. User A is the owner. User B is a non-owner associated user.",
+    "action_or_input": "User B attempts to archive the file. User A attempts to archive the file.",
+    "expected_result": "User B's action is blocked/denied. User A's action succeeds, changing file state to 'Archived'.",
+    "test_type": "Authorization/Negative"
+  },
+  {
+    "test_id": "TC-FTS-013",
+    "source_id": "AFR-FTS-045, AFR-FTS-046, AFR-FTS-047",
+    "purpose": "Verify archived file is readable but not modifiable or forwardable",
+    "preconditions": "A file is in 'Archived' state.",
+    "action_or_input": "Attempt to edit the file. Attempt to forward the file. View the file.",
+    "expected_result": "File is viewable. Edit and Forward actions are disabled or blocked.",
+    "test_type": "Constraint"
+  },
+  {
+    "test_id": "TC-FTS-014",
+    "source_id": "AFR-FTS-009, AFR-FTS-010",
+    "purpose": "Verify role switching preserves file ownership and audit identity",
+    "preconditions": "User has two roles (Role A and Role B). User created a file while acting as Role A.",
+    "action_or_input": "Switch context to Role B. Check ownership of the previously created file.",
+    "expected_result": "File remains owned by the user (associated with Role A context originally). Audit log shows original creator identity.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-015",
+    "source_id": "AFR-FTS-006, AFR-FTS-007, AFR-FTS-008",
+    "purpose": "Verify System Admin cannot perform operational file actions",
+    "preconditions": "User is logged in as System Admin.",
+    "action_or_input": "Attempt to create a file, forward a file, or archive a file.",
+    "expected_result": "Actions are blocked or options are not available to System Admin.",
+    "test_type": "Negative/Authorization"
+  },
+  {
+    "test_id": "TC-FTS-016",
+    "source_id": "AFR-FTS-061, AFR-FTS-062, AFR-FTS-063, AFR-FTS-064",
+    "purpose": "Verify notifications are triggered for file events",
+    "preconditions": "Notification mechanism is mocked/integrated. Users are subscribed.",
+    "action_or_input": "Receive a file, forward a file, return a file, archive a file.",
+    "expected_result": "Corresponding notifications are generated and handed to Fusion notification mechanism for each event.",
+    "test_type": "Integration"
+  },
+  {
+    "test_id": "TC-FTS-017",
+    "source_id": "AFR-FTS-054, AFR-FTS-055, AFR-FTS-056, AFR-FTS-057, AFR-FTS-058, AFR-FTS-059",
+    "purpose": "Verify audit logs are maintained for all key actions",
+    "preconditions": "Audit logging is enabled.",
+    "action_or_input": "Perform file creation, add comment, add attachment, forward, return, and archive.",
+    "expected_result": "Audit log contains entries for each action with timestamps and user details.",
+    "test_type": "Positive"
+  },
+  {
+    "test_id": "TC-FTS-018",
+    "source_id": "AFR-FTS-067, AFR-FTS-068, AFR-FTS-069",
+    "purpose": "Verify FTS APIs are exposed for other modules",
+    "preconditions": "API endpoints are deployed. Authenticated token from another module is available.",
+    "action_or_input": "Invoke API for workflow status, approval chain check, or request tracking.",
+    "expected_result": "API responds with correct data within RBAC limits.",
+    "test_type": "Integration"
+  },
+  {
+    "test_id": "TC-FTS-019",
+    "source_id": "AFR-FTS-070, AFR-FTS-071",
+    "purpose": "Verify RBAC and Audit controls apply to API integrations",
+    "preconditions": "API endpoint exists.",
+    "action_or_input": "Invoke API with unauthorized token/role. Invoke API and check audit log.",
+    "expected_result": "Unauthorized access is denied. Action is recorded in audit log.",
+    "test_type": "Security/Negative"
+  },
+  {
+    "test_id": "TC-FTS-020",
+    "source_id": "AFR-FTS-017",
+    "purpose": "Verify circulated files cannot be deleted",
+    "preconditions": "File is in 'Circulated' state.",
+    "action_or_input": "Attempt to delete the file via UI or API.",
+    "expected_result": "Deletion is blocked. File remains in system.",
+    "test_type": "Negative/Constraint"
+  }
+]
