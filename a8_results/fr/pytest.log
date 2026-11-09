@@ -1,0 +1,23 @@
+.......ssss...sssss.                                                     [100%]
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.8-final-0 ________________
+
+Name                                                                       Stmts   Miss Branch BrPart  Cover   Missing
+----------------------------------------------------------------------------------------------------------------------
+modules/fts/api/serializers.py                                               107     26      8      2    72%   14, 29-33, 51, 66-70, 86, 89, 92, 104, 107, 110, 121, 124, 127, 141, 144, 147, 150, 153, 166, 169, 172, 175
+modules/fts/api/urls.py                                                        4      0      0      0   100%
+modules/fts/api/views.py                                                      78     14     10      2    80%   47-54, 114-118, 141
+modules/fts/apps.py                                                            4      0      0      0   100%
+modules/fts/domain/commands.py                                                43     12     22      6    66%   14, 39, 69, 91-99, 111, 113, 115
+modules/fts/domain/states.py                                                   6      0      0      0   100%
+modules/fts/migrations/0001_initial.py                                         6      0      0      0   100%
+modules/fts/migrations/0002_ftsfilemovement_ftsfile_current_holder_id.py       5      0      0      0   100%
+modules/fts/migrations/__init__.py                                             0      0      0      0   100%
+modules/fts/models.py                                                         47      5      0      0    89%   24, 36, 47, 59, 77
+modules/fts/services/file_archival.py                                         17      2      2      0    89%   11-12
+modules/fts/services/file_creation.py                                         43      6     12      3    84%   65-66, 69, 83->92, 109-110, 113
+modules/fts/services/file_movement.py                                         48     25     22      3    43%   23, 26-27, 30, 90-156
+----------------------------------------------------------------------------------------------------------------------
+TOTAL                                                                        408     90     76     16    74%
+Coverage XML written to file a8_results/fr/coverage.xml
+11 passed, 9 skipped in 2.96s

@@ -1,0 +1,23 @@
+..s.........s..ss.ss....ssssss                                           [100%]
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.8-final-0 ________________
+
+Name                                                                       Stmts   Miss Branch BrPart  Cover   Missing
+----------------------------------------------------------------------------------------------------------------------
+modules/fts/api/serializers.py                                               107     24      8      3    75%   14, 29-33, 51, 67, 86, 89, 92, 104, 107, 110, 121, 124, 127, 141, 144, 147, 150, 153, 166, 169, 172, 175
+modules/fts/api/urls.py                                                        4      0      0      0   100%
+modules/fts/api/views.py                                                      78     10     10      1    85%   47-54, 118, 141
+modules/fts/apps.py                                                            4      0      0      0   100%
+modules/fts/domain/commands.py                                                43     11     22      5    69%   14, 39, 69, 91-99, 113, 115
+modules/fts/domain/states.py                                                   6      0      0      0   100%
+modules/fts/migrations/0001_initial.py                                         6      0      0      0   100%
+modules/fts/migrations/0002_ftsfilemovement_ftsfile_current_holder_id.py       5      0      0      0   100%
+modules/fts/migrations/__init__.py                                             0      0      0      0   100%
+modules/fts/models.py                                                         47      5      0      0    89%   24, 36, 47, 59, 77
+modules/fts/services/file_archival.py                                         17      2      2      0    89%   11-12
+modules/fts/services/file_creation.py                                         43      4     12      1    91%   65-66, 83->92, 109-110
+modules/fts/services/file_movement.py                                         48     21     22      5    51%   23, 26-27, 30, 92, 97-156
+----------------------------------------------------------------------------------------------------------------------
+TOTAL                                                                        408     77     76     15    78%
+Coverage XML written to file a8_results/uc/coverage.xml
+18 passed, 12 skipped in 3.17s
